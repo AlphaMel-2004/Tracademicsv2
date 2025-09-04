@@ -10,7 +10,7 @@
                         <h3 class="mb-0">{{ $dashboardData['program_submissions'] ?? 0 }}</h3>
                     </div>
                     <div class="align-self-center">
-                        <img src="{{ asset('images/tracademics-logo.svg') }}" alt="Programs" style="width: 48px; height: 48px; opacity: 0.75;">
+                        <img src="{{ asset('images/tracademics-logo.png') }}" alt="Programs" style="width: 48px; height: 48px; opacity: 0.75;">
                     </div>
                 </div>
             </div>
@@ -95,7 +95,7 @@
             <div class="card-body">
                 <div class="d-grid gap-2">
                     <a href="#" class="btn btn-success">
-                        <img src="{{ asset('images/tracademics-logo.svg') }}" alt="Program" style="width: 16px; height: 16px;" class="me-2">
+                        <img src="{{ asset('images/tracademics-logo.png') }}" alt="Program" style="width: 16px; height: 16px;" class="me-2">
                         Program Overview
                     </a>
                     <a href="#" class="btn btn-outline-success">

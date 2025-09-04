@@ -123,7 +123,7 @@
     <div class="container">
         <div class="header">
             <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
-                <img src="{{ asset('images/tracademics-logo-small.svg') }}" alt="TracAdemics" style="width: 40px; height: 40px; margin-right: 15px;">
+                <img src="{{ asset('images/tracademics-logo.png') }}" alt="TracAdemics" style="width: 40px; height: 40px; margin-right: 15px;">
                 <h1 style="margin: 0;">TracAdemics</h1>
             </div>
             <div class="subtitle">Brokenshire University Academic Compliance System</div>

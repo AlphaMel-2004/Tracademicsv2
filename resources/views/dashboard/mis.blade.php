@@ -87,7 +87,7 @@
                         Manage Departments
                     </a>
                     <a href="#" class="btn btn-outline-primary">
-                        <img src="{{ asset('images/tracademics-logo.svg') }}" alt="Programs" style="width: 16px; height: 16px;" class="me-2">
+                        <img src="{{ asset('images/tracademics-logo.png') }}" alt="Programs" style="width: 16px; height: 16px;" class="me-2">
                         Manage Programs
                     </a>
                     <a href="#" class="btn btn-outline-secondary">

@@ -8,7 +8,7 @@
     <title>{{ config('app.name', 'TracAdemics') }}</title>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="{{ asset('images/tracademics-logo.svg') }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/tracademics-logo.png') }}">
     <link rel="alternate icon" href="{{ asset('favicon.ico') }}">
 
     <!-- Fonts -->
@@ -62,10 +62,10 @@
         }
         
         .brand-logo img {
-            background: #dc3545;
+            background: #fcfafa;
             color: white;
-            width: 40px;
-            height: 40px;
+            width: 80px;
+            height: 80px;
             display: flex;
             align-items: center;
             justify-content: center;

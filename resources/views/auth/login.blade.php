@@ -4,7 +4,7 @@
 <!-- Left Section - Green Background with Branding -->
 <div class="auth-left">
     <div class="brand-logo">
-        <img src="{{ asset('images/tracademics-logo.svg') }}" alt="TracAdemics">
+        <img src="{{ asset('images/tracademics-logo.png') }}" alt="TracAdemics">
         Tracademics
     </div>
     <div class="brand-title">Academic Compliance Monitoring System</div>

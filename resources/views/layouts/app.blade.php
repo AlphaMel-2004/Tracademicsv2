@@ -8,7 +8,7 @@
     <title>{{ config('app.name', 'TracAdemics') }}</title>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="{{ asset('images/tracademics-logo.svg') }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/tracademics-logo.png') }}">
     <link rel="alternate icon" href="{{ asset('favicon.ico') }}">
 
     <!-- Bootstrap 5 CSS -->
@@ -168,7 +168,7 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
         <div class="container-fluid">
             <a class="navbar-brand" href="{{ route('dashboard') }}">
-                <img src="{{ asset('images/tracademics-logo-small.svg') }}" alt="TracAdemics" class="me-2">
+                <img src="{{ asset('images/tracademics-logo.png') }}" alt="TracAdemics" class="me-2" style="height: 32px;">
                 TracAdemics
             </a>
             
