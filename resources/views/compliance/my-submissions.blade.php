@@ -38,7 +38,7 @@
                                         @endif
                                         <p class="text-muted mb-1">
                                             <i class="fas fa-calendar me-1"></i>
-                                            Submitted: {{ $submission->submitted_at->format('M d, Y g:i A') }}
+                                            Submitted: {{ $submission->submitted_at ? $submission->submitted_at->format('M d, Y g:i A') : 'Not submitted yet' }}
                                         </p>
                                         @if($submission->reviewed_at)
                                             <p class="text-muted mb-1">

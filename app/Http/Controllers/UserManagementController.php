@@ -8,9 +8,11 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\Department;
+use App\Traits\LogsUserActivity;
 
 class UserManagementController extends Controller
 {
+    use LogsUserActivity;
     /**
      * Display user management dashboard
      */
@@ -25,6 +27,10 @@ class UserManagementController extends Controller
         
         $users = User::with(['role', 'department'])->paginate(15);
         
+        // Get roles and departments for the modal
+        $roles = Role::all();
+        $departments = Department::with('programs')->get();
+        
         // Calculate statistics
         $stats = [
             'total' => User::count(),
@@ -35,7 +41,7 @@ class UserManagementController extends Controller
             'faculty' => User::whereHas('role', function($q) { $q->where('name', 'Faculty'); })->count(),
         ];
         
-        return view('user-management.index', compact('users', 'stats'));
+        return view('user-management.index', compact('users', 'stats', 'roles', 'departments'));
     }
 
     /**
@@ -43,16 +49,8 @@ class UserManagementController extends Controller
      */
     public function create()
     {
-        $user = Auth::user();
-        
-        if ($user->role->name !== 'MIS') {
-            abort(403, 'Unauthorized access');
-        }
-        
-        $roles = Role::all();
-        $departments = Department::all();
-        
-        return view('user-management.create', compact('roles', 'departments'));
+        // Redirect to index page since we're using a modal
+        return redirect()->route('users.index');
     }
 
     /**
@@ -68,21 +66,45 @@ class UserManagementController extends Controller
         
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
+            'email' => 'required|string|email|max:255|unique:users|ends_with:@brokenshire.edu.ph',
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/'
+            ],
             'role_id' => 'required|exists:roles,id',
             'department_id' => 'nullable|exists:departments,id',
+            'program_id' => 'nullable|exists:programs,id',
             'faculty_type' => 'nullable|in:regular,visiting,part-time'
+        ], [
+            'email.ends_with' => 'Email must be a @brokenshire.edu.ph address.',
+            'password.regex' => 'Password must contain at least one uppercase letter, one lowercase letter, and one number.'
         ]);
         
-        $user = User::create([
+        $newUser = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role_id' => $request->role_id,
             'department_id' => $request->department_id,
+            'program_id' => $request->program_id,
             'faculty_type' => $request->faculty_type,
         ]);
+        
+        // Log user creation activity
+        $this->logActivity(
+            'create',
+            'Created new user: ' . $newUser->name,
+            [
+                'created_user_id' => $newUser->id,
+                'created_user_email' => $newUser->email,
+                'created_user_role' => Role::find($request->role_id)->name ?? 'Unknown',
+                'created_user_department' => $request->department_id ? Department::find($request->department_id)->name : null,
+                'faculty_type' => $request->faculty_type
+            ]
+        );
         
         return redirect()->route('users.index')->with('success', 'User created successfully.');
     }

@@ -98,8 +98,8 @@
                                                 </span>
                                             </td>
                                             <td>
-                                                <div>{{ $submission->submitted_at->format('M d, Y') }}</div>
-                                                <small class="text-muted">{{ $submission->submitted_at->format('g:i A') }}</small>
+                                                <div>{{ $submission->submitted_at ? $submission->submitted_at->format('M d, Y') : 'Not submitted' }}</div>
+                                                <small class="text-muted">{{ $submission->submitted_at ? $submission->submitted_at->format('g:i A') : 'Pending' }}</small>
                                             </td>
                                             <td>
                                                 <div class="d-flex align-items-center">
@@ -159,7 +159,7 @@
                                                                 @if($submission->subject)
                                                                     <strong>Subject:</strong> {{ $submission->subject->code }} - {{ $submission->subject->name }}<br>
                                                                 @endif
-                                                                <strong>Submitted:</strong> {{ $submission->submitted_at->format('M d, Y g:i A') }}
+                                                                <strong>Submitted:</strong> {{ $submission->submitted_at ? $submission->submitted_at->format('M d, Y g:i A') : 'Not submitted yet' }}
                                                             </div>
                                                         </div>
 
@@ -246,7 +246,7 @@
                                                                     <strong>Comments:</strong> {{ $submission->review_comments }}<br>
                                                                 @endif
                                                                 <strong>Reviewed by:</strong> {{ $submission->reviewer->name ?? 'Unknown' }}<br>
-                                                                <strong>Reviewed at:</strong> {{ $submission->reviewed_at->format('M d, Y g:i A') }}
+                                                                <strong>Reviewed at:</strong> {{ $submission->reviewed_at ? $submission->reviewed_at->format('M d, Y g:i A') : 'Not reviewed yet' }}
                                                             </div>
                                                         @endif
                                                     </div>

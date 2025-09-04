@@ -27,6 +27,7 @@ class User extends Authenticatable
         'current_semester_id',
         'faculty_type',
         'department_id',
+        'program_id',
         'last_login_at',
     ];
 

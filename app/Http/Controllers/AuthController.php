@@ -7,9 +7,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use App\Models\User;
+use App\Traits\LogsUserActivity;
 
 class AuthController extends Controller
 {
+    use LogsUserActivity;
     /**
      * Show the login form
      */
@@ -40,6 +42,18 @@ class AuthController extends Controller
             // Load user relationships
             $user->load(['role', 'department', 'currentSemester']);
 
+            // Log the login activity
+            $this->logActivity(
+                'login',
+                'User logged in successfully',
+                [
+                    'email' => $user->email,
+                    'role' => $user->role->name ?? 'Unknown',
+                    'remember_me' => $request->boolean('remember')
+                ],
+                $user->id
+            );
+
             return redirect()->intended('/dashboard');
         }
 
@@ -53,6 +67,21 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
+        $user = Auth::user();
+        
+        // Log the logout activity
+        if ($user) {
+            $this->logActivity(
+                'logout',
+                'User logged out',
+                [
+                    'email' => $user->email,
+                    'role' => $user->role->name ?? 'Unknown'
+                ],
+                $user->id
+            );
+        }
+
         Auth::logout();
 
         $request->session()->invalidate();

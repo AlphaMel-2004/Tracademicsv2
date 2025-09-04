@@ -7,6 +7,10 @@
 
     <title>{{ config('app.name', 'TracAdemics') }}</title>
 
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="{{ asset('images/tracademics-logo.svg') }}">
+    <link rel="alternate icon" href="{{ asset('favicon.ico') }}">
+
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome Icons -->
@@ -47,7 +51,7 @@
         
         .sidebar {
             background-color: var(--light-bg);
-            min-height: calc(100vh - 56px);
+            min-height: calc(100vh - 50px);
         }
         
         .sidebar .nav-link {
@@ -66,6 +70,33 @@
             color: white;
         }
         
+        /* Compact navbar styling */
+        .navbar {
+            padding: 0.25rem 1rem;
+            min-height: 50px;
+        }
+        
+        .navbar-brand {
+            padding: 0.25rem 0;
+            margin-right: 1rem;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .navbar-brand img {
+            width: 24px !important;
+            height: 24px !important;
+        }
+        
+        .navbar-nav .nav-link {
+            padding: 0.375rem 0.75rem;
+        }
+        
+        .dropdown-toggle::after {
+            margin-left: 0.5rem;
+        }
+        
         .status-badge {
             padding: 0.25rem 0.5rem;
             border-radius: 0.25rem;
@@ -77,6 +108,57 @@
         .status-approved { background-color: #28a745; color: #fff; }
         .status-rejected { background-color: #dc3545; color: #fff; }
         .status-under-review { background-color: #6f42c1; color: #fff; }
+        
+        /* Enhanced Faculty Dashboard Styles */
+        .faculty-dashboard .card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        
+        .faculty-dashboard .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .progress-bar {
+            transition: width 0.3s ease-in-out;
+        }
+        
+        .badge-sm {
+            font-size: 0.65rem;
+        }
+        
+        .card-header.bg-primary {
+            background: linear-gradient(135deg, var(--primary-green), #20c997) !important;
+        }
+        
+        .card-header.bg-success {
+            background: linear-gradient(135deg, #28a745, #20c997) !important;
+        }
+        
+        .card-header.bg-warning {
+            background: linear-gradient(135deg, #ffc107, #fd7e14) !important;
+        }
+        
+        .list-group-item {
+            border-left: 0;
+            border-right: 0;
+        }
+        
+        .list-group-item:first-child {
+            border-top: 0;
+        }
+        
+        .list-group-item:last-child {
+            border-bottom: 0;
+        }
+        
+        .opacity-50 {
+            opacity: 0.5;
+        }
+        
+        .h-100 {
+            height: 100% !important;
+        }
     </style>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -86,21 +168,21 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
         <div class="container-fluid">
             <a class="navbar-brand" href="{{ route('dashboard') }}">
-                <i class="fas fa-graduation-cap me-2"></i>
+                <img src="{{ asset('images/tracademics-logo-small.svg') }}" alt="TracAdemics" class="me-2">
                 TracAdemics
             </a>
             
             @auth
             <div class="navbar-nav ms-auto">
                 <div class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
                         <i class="fas fa-user me-1"></i>
                         {{ Auth::user()->name }}
-                        <span class="badge bg-primary ms-1">{{ Auth::user()->role->name }}</span>
+                        <span class="badge bg-primary ms-2">{{ Auth::user()->role->name }}</span>
                     </a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#"><i class="fas fa-user-cog me-2"></i>Profile</a></li>
-                        <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{{ route('profile.show') }}"><i class="fas fa-user-cog me-2"></i>Profile</a></li>
+                        <li><a class="dropdown-item" href="{{ route('profile.password') }}"><i class="fas fa-lock me-2"></i>Password Settings</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
                             <form method="POST" action="{{ route('logout') }}" class="d-inline">

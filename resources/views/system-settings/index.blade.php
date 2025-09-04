@@ -107,6 +107,14 @@
                                     </a>
                                 </div>
                             </div>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <a href="{{ route('settings.user-logs') }}" class="btn btn-outline-secondary w-100 mb-3">
+                                        <i class="fas fa-history fa-2x d-block mb-2"></i>
+                                        User Activity Logs
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

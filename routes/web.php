@@ -11,6 +11,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\DepartmentManagementController;
+use App\Http\Controllers\ProfileController;
 
 // Redirect root to login
 Route::get('/', function () {
@@ -27,6 +28,12 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 // Protected Routes
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    
+    // Profile Routes
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::get('/profile/password', [ProfileController::class, 'passwordSettings'])->name('profile.password');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
     
     // System status page (for testing/demonstration)
     Route::get('/system-status', function () {
@@ -116,6 +123,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/document-types', [SystemSettingsController::class, 'storeDocumentType'])->name('document-types.store');
         Route::put('/document-types/{documentType}', [SystemSettingsController::class, 'updateDocumentType'])->name('document-types.update');
         Route::delete('/document-types/{documentType}', [SystemSettingsController::class, 'destroyDocumentType'])->name('document-types.destroy');
+        Route::get('/user-logs', [SystemSettingsController::class, 'userLogs'])->name('user-logs');
     });
 
     // Department Management routes (MIS, VPAA, Dean)

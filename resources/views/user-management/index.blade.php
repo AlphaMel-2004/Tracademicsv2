@@ -8,9 +8,9 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2><i class="fas fa-users me-2"></i>User Management</h2>
-                <a href="{{ route('users.create') }}" class="btn btn-primary">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
                     <i class="fas fa-plus me-2"></i>Add User
-                </a>
+                </button>
             </div>
 
             @if(session('success'))
@@ -171,4 +171,246 @@
         </div>
     </div>
 </div>
+
+<!-- Add User Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addUserModalLabel">
+                    <i class="fas fa-user-plus me-2"></i>Add New User
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ route('users.store') }}" id="addUserForm">
+                @csrf
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="email_username" placeholder="username">
+                                <span class="input-group-text">@brokenshire.edu.ph</span>
+                                <input type="hidden" id="email" name="email">
+                            </div>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="role_id" class="form-label">Role <span class="text-danger">*</span></label>
+                            <select class="form-control" id="role_id" name="role_id" required>
+                                <option value="">Select Role</option>
+                                @foreach($roles as $role)
+                                    <option value="{{ $role->id }}">{{ $role->name }}</option>
+                                @endforeach
+                            </select>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="department_id" class="form-label">Department</label>
+                            <select class="form-control" id="department_id" name="department_id">
+                                <option value="">Select Department</option>
+                                @foreach($departments as $department)
+                                    <option value="{{ $department->id }}">{{ $department->name }}</option>
+                                @endforeach
+                            </select>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3" id="program-container" style="display: none;">
+                            <label for="program_id" class="form-label">Program</label>
+                            <select class="form-control" id="program_id" name="program_id">
+                                <option value="">Select Program</option>
+                            </select>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="col-md-6 mb-3" id="faculty-type-container" style="display: none;">
+                            <label for="faculty_type" class="form-label">Faculty Type</label>
+                            <select class="form-control" id="faculty_type" name="faculty_type">
+                                <option value="">Select Type</option>
+                                <option value="regular">Regular</option>
+                                <option value="visiting">Visiting</option>
+                                <option value="part-time">Part-time</option>
+                            </select>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" id="password" name="password" required>
+                                <button type="button" class="btn btn-outline-secondary" onclick="togglePasswordVisibility('password', this)">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="password_confirmation" class="form-label">Confirm Password <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" required>
+                                <button type="button" class="btn btn-outline-secondary" onclick="togglePasswordVisibility('password_confirmation', this)">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Password Requirements:</h6>
+                        <ul class="mb-0">
+                            <li>At least 8 characters long</li>
+                            <li>Must contain at least one uppercase letter (A-Z)</li>
+                            <li>Must contain at least one lowercase letter (a-z)</li>
+                            <li>Must contain at least one number (0-9)</li>
+                            <li>Both password fields must match</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-user-plus me-2"></i>Register User
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Password visibility toggle function
+function togglePasswordVisibility(fieldId, button) {
+    const passwordField = document.getElementById(fieldId);
+    const icon = button.querySelector('i');
+    
+    if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        passwordField.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const emailUsername = document.getElementById('email_username');
+    const emailHidden = document.getElementById('email');
+    const roleSelect = document.getElementById('role_id');
+    const departmentSelect = document.getElementById('department_id');
+    const programSelect = document.getElementById('program_id');
+    const programContainer = document.getElementById('program-container');
+    const facultyTypeContainer = document.getElementById('faculty-type-container');
+    
+    // Update hidden email field when username changes
+    emailUsername.addEventListener('input', function() {
+        emailHidden.value = this.value + '@brokenshire.edu.ph';
+    });
+    
+    // Show/hide program and faculty type based on role
+    roleSelect.addEventListener('change', function() {
+        const selectedRole = this.options[this.selectedIndex].text;
+        
+        if (selectedRole === 'Faculty' || selectedRole === 'Program Head') {
+            programContainer.style.display = 'block';
+            facultyTypeContainer.style.display = 'block';
+        } else if (selectedRole === 'Dean') {
+            programContainer.style.display = 'none';
+            facultyTypeContainer.style.display = 'none';
+            programSelect.value = '';
+        } else {
+            programContainer.style.display = 'none';
+            facultyTypeContainer.style.display = 'none';
+            programSelect.value = '';
+        }
+    });
+    
+    // Update programs when department changes
+    departmentSelect.addEventListener('change', function() {
+        const departmentId = this.value;
+        programSelect.innerHTML = '<option value="">Select Program</option>';
+        
+        if (departmentId) {
+            const departments = @json($departments);
+            const selectedDept = departments.find(dept => dept.id == departmentId);
+            
+            if (selectedDept && selectedDept.programs) {
+                selectedDept.programs.forEach(program => {
+                    const option = document.createElement('option');
+                    option.value = program.id;
+                    option.textContent = program.name;
+                    programSelect.appendChild(option);
+                });
+            }
+        }
+    });
+    
+    // Password validation
+    const password = document.getElementById('password');
+    const passwordConfirm = document.getElementById('password_confirmation');
+    
+    function validatePassword() {
+        const pwd = password.value;
+        const confirm = passwordConfirm.value;
+        
+        // Check password requirements
+        const hasLower = /[a-z]/.test(pwd);
+        const hasUpper = /[A-Z]/.test(pwd);
+        const hasNumber = /\d/.test(pwd);
+        const isLongEnough = pwd.length >= 8;
+        const passwordsMatch = pwd === confirm;
+        
+        // Validate password field
+        if (pwd && (!hasLower || !hasUpper || !hasNumber || !isLongEnough)) {
+            password.classList.add('is-invalid');
+            password.nextElementSibling.textContent = 'Password must contain uppercase, lowercase, number and be 8+ characters';
+        } else {
+            password.classList.remove('is-invalid');
+            password.nextElementSibling.textContent = '';
+        }
+        
+        // Validate confirmation field
+        if (confirm && !passwordsMatch) {
+            passwordConfirm.classList.add('is-invalid');
+            passwordConfirm.nextElementSibling.textContent = 'Passwords do not match';
+        } else {
+            passwordConfirm.classList.remove('is-invalid');
+            passwordConfirm.nextElementSibling.textContent = '';
+        }
+    }
+    
+    password.addEventListener('input', validatePassword);
+    passwordConfirm.addEventListener('input', validatePassword);
+    
+    // Show validation errors if form was submitted and has errors
+    @if($errors->any())
+        const modal = new bootstrap.Modal(document.getElementById('addUserModal'));
+        modal.show();
+        
+        @foreach($errors->all() as $error)
+            console.log('{{ $error }}');
+        @endforeach
+    @endif
+});
+</script>
 @endsection

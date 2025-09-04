@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Semester;
 use App\Models\DocumentType;
 use App\Models\SemesterSession;
+use App\Models\UserLog;
 
 class SystemSettingsController extends Controller
 {
@@ -29,7 +30,7 @@ class SystemSettingsController extends Controller
         $stats = [
             'total_semesters' => Semester::count(),
             'total_document_types' => DocumentType::count(),
-            'active_sessions' => SemesterSession::where('is_active', true)->count(),
+            'active_sessions' => SemesterSession::count(),
             'system_users' => \App\Models\User::count()
         ];
         
@@ -203,5 +204,40 @@ class SystemSettingsController extends Controller
         $semester->update(['is_active' => true]);
         
         return back()->with('success', 'Semester activated successfully.');
+    }
+
+    /**
+     * Manage user logs
+     */
+    public function userLogs(Request $request)
+    {
+        $user = Auth::user();
+        
+        if ($user->role->name !== 'MIS') {
+            abort(403, 'Unauthorized access');
+        }
+        
+        $query = UserLog::with('user')->orderBy('created_at', 'desc');
+        
+        // Apply filters
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+        
+        if ($request->filled('action')) {
+            $query->where('action', $request->action);
+        }
+        
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+        
+        $userLogs = $query->paginate(20)->withQueryString();
+        
+        return view('system-settings.user-logs', compact('userLogs'));
     }
 }

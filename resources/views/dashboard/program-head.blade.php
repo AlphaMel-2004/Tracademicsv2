@@ -10,7 +10,7 @@
                         <h3 class="mb-0">{{ $dashboardData['program_submissions'] ?? 0 }}</h3>
                     </div>
                     <div class="align-self-center">
-                        <i class="fas fa-graduation-cap fa-2x opacity-75"></i>
+                        <img src="{{ asset('images/tracademics-logo.svg') }}" alt="Programs" style="width: 48px; height: 48px; opacity: 0.75;">
                     </div>
                 </div>
             </div>
@@ -95,7 +95,7 @@
             <div class="card-body">
                 <div class="d-grid gap-2">
                     <a href="#" class="btn btn-success">
-                        <i class="fas fa-graduation-cap me-2"></i>
+                        <img src="{{ asset('images/tracademics-logo.svg') }}" alt="Program" style="width: 16px; height: 16px;" class="me-2">
                         Program Overview
                     </a>
                     <a href="#" class="btn btn-outline-success">
