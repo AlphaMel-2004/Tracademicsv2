@@ -228,4 +228,71 @@ class ReportController extends Controller
         
         return $query;
     }
+
+    /**
+     * Faculty performance report
+     */
+    public function facultyReport(Request $request)
+    {
+        $user = Auth::user();
+        
+        if (!in_array($user->role->name, ['MIS', 'VPAA', 'Dean', 'Program Head'])) {
+            abort(403, 'Unauthorized access');
+        }
+        
+        // Get faculty compliance statistics
+        $facultyStats = User::whereHas('role', function($q) {
+            $q->where('name', 'Faculty');
+        })->with(['complianceSubmissions.documentType', 'department'])
+        ->get()
+        ->map(function($faculty) {
+            $totalSubmissions = $faculty->complianceSubmissions->count();
+            $approvedSubmissions = $faculty->complianceSubmissions->where('status', 'approved')->count();
+            $complianceRate = $totalSubmissions > 0 ? round(($approvedSubmissions / $totalSubmissions) * 100, 2) : 0;
+            
+            return [
+                'faculty' => $faculty,
+                'total_submissions' => $totalSubmissions,
+                'approved_submissions' => $approvedSubmissions,
+                'compliance_rate' => $complianceRate
+            ];
+        });
+        
+        return view('reports.faculty', compact('facultyStats'));
+    }
+
+    /**
+     * Department performance report
+     */
+    public function departmentReport(Request $request)
+    {
+        $user = Auth::user();
+        
+        if (!in_array($user->role->name, ['MIS', 'VPAA', 'Dean'])) {
+            abort(403, 'Unauthorized access');
+        }
+        
+        // Get department statistics
+        $departmentStats = Department::withCount(['users', 'programs'])
+        ->with(['users.complianceSubmissions'])
+        ->get()
+        ->map(function($department) {
+            $totalSubmissions = $department->users->sum(function($user) {
+                return $user->complianceSubmissions->count();
+            });
+            $approvedSubmissions = $department->users->sum(function($user) {
+                return $user->complianceSubmissions->where('status', 'approved')->count();
+            });
+            $complianceRate = $totalSubmissions > 0 ? round(($approvedSubmissions / $totalSubmissions) * 100, 2) : 0;
+            
+            return [
+                'department' => $department,
+                'total_submissions' => $totalSubmissions,
+                'approved_submissions' => $approvedSubmissions,
+                'compliance_rate' => $complianceRate
+            ];
+        });
+        
+        return view('reports.department', compact('departmentStats'));
+    }
 }

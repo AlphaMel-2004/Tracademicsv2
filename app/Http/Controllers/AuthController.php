@@ -33,8 +33,11 @@ class AuthController extends Controller
         if (Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
             $request->session()->regenerate();
 
-            // Load user relationships
+            // Update last login time
             $user = Auth::user();
+            User::where('id', $user->id)->update(['last_login_at' => now()]);
+            
+            // Load user relationships
             $user->load(['role', 'department', 'currentSemester']);
 
             return redirect()->intended('/dashboard');

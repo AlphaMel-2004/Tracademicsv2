@@ -146,7 +146,7 @@
                         
                         @if(in_array(Auth::user()->role->name, ['MIS', 'VPAA', 'Dean', 'Program Head']))
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}" href="{{ route('reports.dashboard') }}">
                                 <i class="fas fa-chart-bar me-2"></i>Reports
                             </a>
                         </li>
@@ -172,7 +172,7 @@
                         
                         @if(in_array(Auth::user()->role->name, ['MIS', 'VPAA', 'Dean']))
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link {{ request()->routeIs('departments.*') ? 'active' : '' }}" href="{{ route('departments.index') }}">
                                 <i class="fas fa-building me-2"></i>Department Management
                             </a>
                         </li>
@@ -180,12 +180,12 @@
                         
                         @if(Auth::user()->role->name === 'MIS')
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">
                                 <i class="fas fa-users me-2"></i>User Management
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link {{ request()->routeIs('settings.*') ? 'active' : '' }}" href="{{ route('settings.index') }}">
                                 <i class="fas fa-cogs me-2"></i>System Settings
                             </a>
                         </li>
