@@ -226,7 +226,7 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <span class="badge bg-info">{{ $semester->sessions->count() }}</span>
+                                        <span class="badge bg-info">{{ $semester->semesterSessions->count() }}</span>
                                     </td>
                                     <td>
                                         @if(!$semester->is_active)

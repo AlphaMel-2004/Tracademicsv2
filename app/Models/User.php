@@ -112,6 +112,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the faculty semester compliances for the user.
+     */
+    public function facultySemesterCompliances(): HasMany
+    {
+        return $this->hasMany(FacultySemesterCompliance::class);
+    }
+
+    /**
+     * Get the subject compliances for the user.
+     */
+    public function subjectCompliances(): HasMany
+    {
+        return $this->hasMany(SubjectCompliance::class);
+    }
+
+    /**
      * Check if user has specific role
      */
     public function hasRole(string $roleName): bool

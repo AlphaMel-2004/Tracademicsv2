@@ -8,6 +8,10 @@ use App\Models\User;
 use App\Models\Department;
 use App\Models\Program;
 use App\Models\ComplianceSubmission;
+use App\Models\FacultySemesterCompliance;
+use App\Models\SubjectCompliance;
+use App\Models\DocumentType;
+use App\Models\Semester;
 
 class MonitorController extends Controller
 {
@@ -277,30 +281,96 @@ class MonitorController extends Controller
             ->unique();
             
         $faculty = User::whereIn('id', $facultyIds)
-            ->with(['complianceSubmissions'])
+            ->with([
+                'facultySemesterCompliances.documentType',
+                'subjectCompliances.documentType',
+                'subjectCompliances.subject',
+                'facultyAssignments.subject',
+                'facultyAssignments.semester'
+            ])
             ->get();
+
+        // Get current semester for semester-wide compliance
+        $currentSemester = Semester::where('is_active', true)->first();
         
-        $facultyCompliance = $faculty->map(function ($facultyMember) {
-            $submissions = $facultyMember->complianceSubmissions;
-            $totalSubmissions = $submissions->count();
-            $approvedSubmissions = $submissions->where('status', 'approved')->count();
-            $pendingSubmissions = $submissions->where('status', 'pending')->count();
-            $rejectedSubmissions = $submissions->where('status', 'rejected')->count();
+        // Get document types for each submission type
+        $semesterDocTypes = DocumentType::where('submission_type', 'semester')->get();
+        $subjectDocTypes = DocumentType::where('submission_type', 'subject')->get();
+
+        $facultyCompliance = $faculty->map(function ($facultyMember) use ($currentSemester, $semesterDocTypes, $subjectDocTypes) {
+            // Get semester-wide compliance data
+            $semesterCompliances = collect();
+            if ($currentSemester) {
+                foreach ($semesterDocTypes as $docType) {
+                    $compliance = $facultyMember->facultySemesterCompliances()
+                        ->where('semester_id', $currentSemester->id)
+                        ->where('document_type_id', $docType->id)
+                        ->with('documentType')
+                        ->first();
+                    
+                    if (!$compliance) {
+                        // Create placeholder for missing compliance
+                        $compliance = new FacultySemesterCompliance([
+                            'user_id' => $facultyMember->id,
+                            'document_type_id' => $docType->id,
+                            'semester_id' => $currentSemester->id,
+                            'actual_situation' => '',
+                            'evidence_link' => '',
+                            'self_evaluation_status' => 'Not Complied',
+                        ]);
+                        $compliance->documentType = $docType;
+                    }
+                    
+                    $semesterCompliances->push($compliance);
+                }
+            }
             
-            $complianceRate = $totalSubmissions > 0 ? 
-                round(($approvedSubmissions / $totalSubmissions) * 100, 1) : 0;
+            // Get assigned subjects with subject-specific compliance
+            $assignedSubjects = $facultyMember->facultyAssignments()
+                ->with(['subject'])
+                ->get()
+                ->map(function ($assignment) use ($facultyMember, $subjectDocTypes) {
+                    $subject = $assignment->subject;
+                    
+                    // Get subject-specific compliance for each document type
+                    $subjectCompliances = collect();
+                    foreach ($subjectDocTypes as $docType) {
+                        $compliance = $facultyMember->subjectCompliances()
+                            ->where('subject_id', $subject->id)
+                            ->where('document_type_id', $docType->id)
+                            ->with('documentType')
+                            ->first();
+                        
+                        if (!$compliance) {
+                            // Create placeholder for missing compliance
+                            $compliance = new SubjectCompliance([
+                                'user_id' => $facultyMember->id,
+                                'subject_id' => $subject->id,
+                                'document_type_id' => $docType->id,
+                                'actual_situation' => '',
+                                'evidence_link' => '',
+                                'self_evaluation_status' => 'Not Complied',
+                            ]);
+                            $compliance->documentType = $docType;
+                        }
+                        
+                        $subjectCompliances->push($compliance);
+                    }
+                    
+                    return [
+                        'assignment' => $assignment,
+                        'subject' => $subject,
+                        'compliances' => $subjectCompliances
+                    ];
+                });
             
             return [
                 'faculty' => $facultyMember,
-                'total_submissions' => $totalSubmissions,
-                'approved_submissions' => $approvedSubmissions,
-                'pending_submissions' => $pendingSubmissions,
-                'rejected_submissions' => $rejectedSubmissions,
-                'compliance_rate' => $complianceRate,
-                'last_submission' => $submissions->sortByDesc('created_at')->first()
+                'semester_compliances' => $semesterCompliances,
+                'assigned_subjects' => $assignedSubjects
             ];
         });
         
-        return view('monitor.program-head-compliance', compact('program', 'facultyCompliance'));
+        return view('monitor.program-head-compliance', compact('program', 'facultyCompliance', 'currentSemester'));
     }
 }

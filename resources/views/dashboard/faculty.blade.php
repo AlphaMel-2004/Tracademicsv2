@@ -286,7 +286,6 @@
         </div>
     </div>
 </div>
-
 <!-- Current Semester & Subject Information -->
 <div class="row">
     <div class="col-lg-6 mb-4">

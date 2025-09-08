@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ComplianceController;
+use App\Http\Controllers\ComplianceActionController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\FacultyManagementController;
 use App\Http\Controllers\SubjectManagementController;
@@ -158,6 +159,12 @@ Route::middleware(['auth'])->group(function () {
         
         // Program Head Monitor Routes
         Route::get('/compliance', [MonitorController::class, 'compliance'])->name('compliance');
+        
+        // Compliance Action Routes (for Program Heads)
+        Route::post('/semester-compliance/{id}/approve', [ComplianceActionController::class, 'approveSemesterCompliance'])->name('semester.compliance.approve');
+        Route::post('/semester-compliance/{id}/reject', [ComplianceActionController::class, 'rejectSemesterCompliance'])->name('semester.compliance.reject');
+        Route::post('/subject-compliance/{id}/approve', [ComplianceActionController::class, 'approveSubjectCompliance'])->name('subject.compliance.approve');
+        Route::post('/subject-compliance/{id}/reject', [ComplianceActionController::class, 'rejectSubjectCompliance'])->name('subject.compliance.reject');
     });
     
     // Faculty Assigned Subjects routes
@@ -179,4 +186,15 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/department/{department}/create', [ProgramsManagementController::class, 'create'])->name('create');
         Route::post('/department/{department}', [ProgramsManagementController::class, 'store'])->name('store');
     });
+});
+
+// Faculty Semester Compliance routes
+Route::middleware(['auth'])->group(function () {
+    Route::put('/faculty-compliance/{id}', [\App\Http\Controllers\FacultySemesterComplianceController::class, 'update'])->name('faculty-compliance.update');
+    Route::put('/subject-compliance/{id}', [\App\Http\Controllers\SubjectComplianceController::class, 'update'])->name('subject-compliance.update');
+    
+    // Redirect old semester requirements route to subjects page
+    Route::get('/faculty/semester-requirements', function () {
+        return redirect()->route('subjects.assigned');
+    })->name('faculty.semester-requirements');
 });

@@ -3,6 +3,38 @@
 @section('title', 'Subject Requirements')
 
 @section('content')
+<style>
+    .subject-requirements-table {
+        font-size: 0.9rem;
+    }
+    
+    .subject-requirements-table td {
+        vertical-align: middle;
+        padding: 12px 8px;
+    }
+    
+    .subject-requirements-table .actual-situation {
+        font-size: 0.85rem;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+    }
+    
+    .subject-requirements-table .actual-situation:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+    }
+    
+    @media (max-width: 768px) {
+        .subject-requirements-table {
+            font-size: 0.8rem;
+        }
+        
+        .subject-requirements-table td {
+            padding: 8px 4px;
+        }
+    }
+</style>
+
 <div class="container-fluid">
     <!-- Header -->
     <div class="row mb-4">
@@ -82,111 +114,293 @@
         </div>
     </div>
 
-    <!-- Requirements Table -->
+    <!-- Subject Requirements Table -->
     <div class="card">
-        <div class="card-header">
-            <h5 class="mb-0">Document Requirements</h5>
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-book me-2"></i>
+                Subject-specific Requirements - {{ $subject->code }}
+            </h5>
+            <small>Requirements that need to be submitted for this specific subject</small>
         </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Document Type</th>
-                            <th>Status</th>
-                            <th>Submitted</th>
-                            <th>Review Comments</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($requirements as $requirement)
-                        <tr>
-                            <td>
-                                <div>
-                                    <strong>{{ $requirement['document_type']->name }}</strong>
-                                    @if($requirement['document_type']->description)
-                                    <br>
-                                    <small class="text-muted">{{ $requirement['document_type']->description }}</small>
-                                    @endif
-                                </div>
-                            </td>
-                            <td>
-                                @if($requirement['status'] === 'approved')
-                                    <span class="badge bg-success">
-                                        <i class="fas fa-check me-1"></i>Approved
-                                    </span>
-                                @elseif($requirement['status'] === 'pending')
-                                    <span class="badge bg-warning">
-                                        <i class="fas fa-clock me-1"></i>Pending Review
-                                    </span>
-                                @elseif($requirement['status'] === 'rejected')
-                                    <span class="badge bg-danger">
-                                        <i class="fas fa-times me-1"></i>Rejected
-                                    </span>
-                                @else
-                                    <span class="badge bg-secondary">
-                                        <i class="fas fa-exclamation me-1"></i>Not Submitted
-                                    </span>
-                                @endif
-                            </td>
-                            <td>
-                                @if($requirement['submitted_at'])
-                                    <small>{{ $requirement['submitted_at']->format('M j, Y g:i A') }}</small>
-                                @else
-                                    <small class="text-muted">Not submitted</small>
-                                @endif
-                            </td>
-                            <td>
-                                @if($requirement['review_comments'])
-                                    <small>{{ $requirement['review_comments'] }}</small>
-                                @else
-                                    <small class="text-muted">No comments</small>
-                                @endif
-                            </td>
-                            <td>
-                                <div class="btn-group btn-group-sm">
-                                    @if($requirement['submission'])
-                                        @if($requirement['file_path'])
-                                            <a href="{{ asset('storage/' . $requirement['file_path']) }}" 
-                                               class="btn btn-outline-info" 
-                                               target="_blank" 
-                                               title="View File">
-                                                <i class="fas fa-file"></i>
+        <div class="card-body p-0">
+            @if($requirements && $requirements->count() > 0)
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover mb-0 subject-requirements-table" id="subject-requirements-table">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Document Type</th>
+                                <th>Description</th>
+                                <th>Actual Situation</th>
+                                <th>Evidence</th>
+                                <th>Self-Evaluation Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($requirements as $requirement)
+                                <tr data-compliance-id="{{ $requirement['compliance']->id }}">
+                                    <td>
+                                        <strong>{{ $requirement['document_type']->name }}</strong>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">{{ $requirement['document_type']->description }}</small>
+                                    </td>
+                                    <td>
+                                        <textarea 
+                                            class="form-control form-control-sm actual-situation" 
+                                            rows="2" 
+                                            placeholder="Describe your document status..."
+                                            data-field="actual_situation"
+                                            style="resize: vertical; min-height: 50px;">{{ $requirement['compliance']->actual_situation }}</textarea>
+                                    </td>
+                                    <td>
+                                        @if($requirement['compliance']->evidence_link)
+                                            <a href="{{ $requirement['compliance']->evidence_link }}" target="_blank" class="text-primary">
+                                                <i class="fas fa-external-link-alt me-1"></i>Link
                                             </a>
+                                        @else
+                                            <span class="text-danger small">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>Required
+                                            </span>
                                         @endif
-                                        
-                                        @if($requirement['link_url'])
-                                            <a href="{{ $requirement['link_url'] }}" 
-                                               class="btn btn-outline-primary" 
-                                               target="_blank" 
-                                               title="Open Link">
-                                                <i class="fas fa-external-link-alt"></i>
-                                            </a>
-                                        @endif
-                                        
-                                        @if($requirement['status'] === 'rejected' || $requirement['status'] === 'not_submitted')
-                                            <a href="{{ route('compliance.create', ['subject_id' => $subject->id, 'document_type_id' => $requirement['document_type']->id]) }}" 
-                                               class="btn btn-outline-success" 
-                                               title="Resubmit">
-                                                <i class="fas fa-redo"></i>
-                                            </a>
-                                        @endif
-                                    @else
-                                        <a href="{{ route('compliance.create', ['subject_id' => $subject->id, 'document_type_id' => $requirement['document_type']->id]) }}" 
-                                           class="btn btn-success btn-sm" 
-                                           title="Submit Document">
-                                            <i class="fas fa-upload me-1"></i>Submit
-                                        </a>
-                                    @endif
-                                </div>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+                                    </td>
+                                    <td>
+                                        <select class="form-select form-select-sm compliance-status" data-field="self_evaluation_status">
+                                            <option value="Not Complied" {{ $requirement['compliance']->self_evaluation_status === 'Not Complied' ? 'selected' : '' }}>
+                                                Not Complied
+                                            </option>
+                                            <option value="Complied" {{ $requirement['compliance']->self_evaluation_status === 'Complied' ? 'selected' : '' }}>
+                                                Complied
+                                            </option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#linkModal{{ $requirement['compliance']->id }}">
+                                            <i class="fas fa-link"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <div class="p-4 text-center">
+                    <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                    <p class="mb-0">No subject requirements found</p>
+                </div>
+            @endif
         </div>
     </div>
 </div>
+
+<!-- Link Modals for each requirement -->
+@if($requirements && $requirements->count() > 0)
+    @foreach($requirements as $requirement)
+    <div class="modal fade" id="linkModal{{ $requirement['compliance']->id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Submit Evidence Link</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form class="link-form" data-compliance-id="{{ $requirement['compliance']->id }}">
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <strong>{{ $requirement['document_type']->name }}</strong>
+                            </label>
+                            <p class="text-muted small">{{ $requirement['document_type']->description }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Google Drive Link</label>
+                            <input 
+                                type="url" 
+                                class="form-control evidence-link-input" 
+                                placeholder="https://drive.google.com/..."
+                                value="{{ $requirement['compliance']->evidence_link }}"
+                                data-field="evidence_link">
+                            <div class="form-text">Please ensure the link is publicly accessible or shared properly</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary save-link-btn" data-compliance-id="{{ $requirement['compliance']->id }}">
+                        Save Link
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endforeach
+@endif
+
+<script>
+// Subject Requirements Table Handlers
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-save on textarea change (with debounce)
+    let timeouts = {};
+    
+    document.querySelectorAll('.actual-situation').forEach(textarea => {
+        textarea.addEventListener('input', function() {
+            const complianceId = this.closest('tr').dataset.complianceId;
+            const field = this.dataset.field;
+            const value = this.value;
+            
+            // Clear existing timeout
+            if (timeouts[complianceId + '_' + field]) {
+                clearTimeout(timeouts[complianceId + '_' + field]);
+            }
+            
+            // Set new timeout for auto-save
+            timeouts[complianceId + '_' + field] = setTimeout(() => {
+                updateSubjectCompliance(complianceId, field, value);
+            }, 1000); // Auto-save after 1 second of no typing
+        });
+    });
+
+    // Auto-save on select change
+    document.querySelectorAll('.compliance-status').forEach(select => {
+        select.addEventListener('change', function() {
+            const complianceId = this.closest('tr').dataset.complianceId;
+            const field = this.dataset.field;
+            const value = this.value;
+            
+            updateSubjectCompliance(complianceId, field, value);
+        });
+    });
+
+    // Save link button handlers
+    document.querySelectorAll('.save-link-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const complianceId = this.dataset.complianceId;
+            const modal = document.getElementById('linkModal' + complianceId);
+            const linkInput = modal.querySelector('.evidence-link-input');
+            const link = linkInput.value.trim();
+            
+            // Update compliance with new link
+            updateSubjectCompliance(complianceId, 'evidence_link', link, () => {
+                // Close modal on success
+                const bsModal = bootstrap.Modal.getInstance(modal);
+                bsModal.hide();
+                
+                // Show success message
+                showToast('Evidence link saved successfully', 'success');
+            });
+        });
+    });
+});
+
+function updateSubjectCompliance(complianceId, field, value, successCallback = null) {
+    console.log('Updating subject compliance:', { complianceId, field, value });
+    
+    // Prepare the data to send
+    const data = {
+        _method: 'PUT'
+    };
+    
+    // Only send the field that's being updated
+    data[field] = value || '';
+
+    fetch(`/subject-compliance/${complianceId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(responseData => {
+        console.log('Server response:', responseData);
+        
+        if (responseData.success) {
+            // Show success feedback
+            showToast('Changes saved successfully', 'success');
+            
+            // Update the UI with the latest data
+            if (responseData.data && field === 'evidence_link') {
+                console.log('Updating evidence display with:', responseData.data.evidence_link);
+                updateEvidenceDisplay(complianceId, responseData.data.evidence_link);
+                
+                // Update status dropdown if it was auto-updated
+                if (responseData.data.self_evaluation_status) {
+                    const statusSelect = document.querySelector(`tr[data-compliance-id="${complianceId}"] .compliance-status`);
+                    if (statusSelect) {
+                        statusSelect.value = responseData.data.self_evaluation_status;
+                    }
+                }
+            }
+            
+            if (successCallback) {
+                successCallback();
+            }
+        } else {
+            console.error('Server error:', responseData);
+            showToast('Error saving changes', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Network error:', error);
+        showToast('Error saving changes', 'error');
+    });
+}
+
+function updateEvidenceDisplay(complianceId, link) {
+    const row = document.querySelector(`tr[data-compliance-id="${complianceId}"]`);
+    const evidenceCell = row.children[3]; // Evidence column
+    
+    if (link) {
+        evidenceCell.innerHTML = `
+            <a href="${link}" target="_blank" class="text-primary">
+                <i class="fas fa-external-link-alt me-1"></i>Link
+            </a>
+        `;
+    } else {
+        evidenceCell.innerHTML = `
+            <span class="text-danger small">
+                <i class="fas fa-exclamation-triangle me-1"></i>Required
+            </span>
+        `;
+    }
+}
+
+function showToast(message, type = 'info') {
+    // Create toast notification
+    const toastHtml = `
+        <div class="toast align-items-center text-white bg-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `;
+    
+    // Create toast container if it doesn't exist
+    let toastContainer = document.querySelector('.toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        document.body.appendChild(toastContainer);
+    }
+    
+    // Add toast to container
+    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+    
+    // Show toast
+    const toastElement = toastContainer.lastElementChild;
+    const toast = new bootstrap.Toast(toastElement);
+    toast.show();
+    
+    // Remove toast after it's hidden
+    toastElement.addEventListener('hidden.bs.toast', () => {
+        toastElement.remove();
+    });
+}
+</script>
 @endsection

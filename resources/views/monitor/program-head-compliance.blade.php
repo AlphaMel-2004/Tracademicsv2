@@ -8,7 +8,7 @@
     <div class="row mb-4">
         <div class="col-12">
             <h2><i class="fas fa-clipboard-check me-2"></i>Monitor Compliances</h2>
-            <p class="text-muted">Faculty compliance status for {{ $program->name }}</p>
+            <p class="text-muted">Faculty compliance monitoring for {{ $program->name }}</p>
         </div>
     </div>
 
@@ -31,184 +31,391 @@
         </div>
     </div>
 
-    <!-- Filter and Search -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="input-group">
-                <span class="input-group-text"><i class="fas fa-search"></i></span>
-                <input type="text" class="form-control" id="facultySearch" placeholder="Search faculty by name...">
+    @if($facultyCompliance->count() > 0)
+        <!-- Faculty Compliance Cards -->
+        @foreach($facultyCompliance as $index => $data)
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h5 class="mb-0">
+                            <i class="fas fa-user me-2"></i>
+                            {{ $data['faculty']->name }}
+                        </h5>
+                        <small class="text-muted">{{ $data['faculty']->email }}</small>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <span class="badge bg-secondary">Faculty ID: {{ $data['faculty']->id }}</span>
+                    </div>
+                </div>
             </div>
-        </div>
-        <div class="col-md-6">
-            <select class="form-select" id="statusFilter">
-                <option value="">All Status</option>
-                <option value="excellent">Excellent (80%+)</option>
-                <option value="good">Good (60-79%)</option>
-                <option value="needs-improvement">Needs Improvement (40-59%)</option>
-                <option value="critical">Critical (Below 40%)</option>
-            </select>
-        </div>
-    </div>
-
-    <!-- Faculty Compliance Table -->
-    <div class="card">
-        <div class="card-header">
-            <h5 class="mb-0">Faculty Compliance Details</h5>
-        </div>
-        <div class="card-body">
-            @if($facultyCompliance->count() > 0)
-            <div class="table-responsive">
-                <table class="table table-hover" id="facultyTable">
-                    <thead>
-                        <tr>
-                            <th>Faculty Member</th>
-                            <th>Total Submissions</th>
-                            <th>Approved</th>
-                            <th>Pending</th>
-                            <th>Rejected</th>
-                            <th>Compliance Rate</th>
-                            <th>Last Submission</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($facultyCompliance as $facultyData)
-                        <tr data-status="{{ $facultyData['compliance_rate'] >= 80 ? 'excellent' : ($facultyData['compliance_rate'] >= 60 ? 'good' : ($facultyData['compliance_rate'] >= 40 ? 'needs-improvement' : 'critical')) }}">
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="avatar-initial bg-primary text-white rounded-circle me-3" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                                        {{ substr($facultyData['faculty']->name, 0, 1) }}
-                                    </div>
-                                    <div>
-                                        <strong class="faculty-name">{{ $facultyData['faculty']->name }}</strong>
-                                        <br>
-                                        <small class="text-muted">{{ $facultyData['faculty']->email }}</small>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="badge bg-secondary">{{ $facultyData['total_submissions'] }}</span>
-                            </td>
-                            <td>
-                                <span class="badge bg-success">{{ $facultyData['approved_submissions'] }}</span>
-                            </td>
-                            <td>
-                                <span class="badge bg-warning">{{ $facultyData['pending_submissions'] }}</span>
-                            </td>
-                            <td>
-                                <span class="badge bg-danger">{{ $facultyData['rejected_submissions'] }}</span>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="progress me-2" style="width: 60px; height: 8px;">
-                                        <div class="progress-bar 
-                                            @if($facultyData['compliance_rate'] >= 80) bg-success 
-                                            @elseif($facultyData['compliance_rate'] >= 60) bg-warning 
-                                            @elseif($facultyData['compliance_rate'] >= 40) bg-orange 
-                                            @else bg-danger @endif" 
-                                            style="width: {{ $facultyData['compliance_rate'] }}%"></div>
-                                    </div>
-                                    <small><strong>{{ $facultyData['compliance_rate'] }}%</strong></small>
-                                </div>
-                            </td>
-                            <td>
-                                @if($facultyData['last_submission'])
-                                    <small>{{ $facultyData['last_submission']->created_at->format('M j, Y') }}</small>
+            <div class="card-body">
+                <!-- Semester-wide Requirements Compliance Table -->
+                <h6 class="mb-3">
+                    <i class="fas fa-calendar me-2"></i>
+                    Semester-wide Requirements Compliance
+                    @if($currentSemester)
+                        <small class="text-muted">({{ $currentSemester->name }} {{ $currentSemester->academic_year }})</small>
+                    @endif
+                </h6>
+                
+                <div class="table-responsive mb-4">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Document Type</th>
+                                <th>Status</th>
+                                <th>Link</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($data['semester_compliances'] as $compliance)
+                            <tr>
+                                <td>
+                                    <strong>{{ $compliance->documentType->name }}</strong>
                                     <br>
-                                    <span class="badge badge-sm bg-{{ $facultyData['last_submission']->status === 'approved' ? 'success' : ($facultyData['last_submission']->status === 'pending' ? 'warning' : 'danger') }}">
-                                        {{ ucfirst($facultyData['last_submission']->status) }}
-                                    </span>
-                                @else
-                                    <small class="text-muted">No submissions</small>
-                                @endif
-                            </td>
-                            <td>
-                                @if($facultyData['compliance_rate'] >= 80)
-                                    <span class="badge bg-success">Excellent</span>
-                                @elseif($facultyData['compliance_rate'] >= 60)
-                                    <span class="badge bg-warning">Good</span>
-                                @elseif($facultyData['compliance_rate'] >= 40)
-                                    <span class="badge bg-orange">Needs Improvement</span>
-                                @else
-                                    <span class="badge bg-danger">Critical</span>
-                                @endif
-                            </td>
-                            <td>
-                                <div class="btn-group btn-group-sm">
-                                    <a href="{{ route('compliance.user-submissions', $facultyData['faculty']->id) }}" class="btn btn-outline-primary" title="View Details">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    @if($facultyData['compliance_rate'] < 60)
-                                    <button class="btn btn-outline-warning" title="Send Reminder" onclick="sendReminder({{ $facultyData['faculty']->id }})">
-                                        <i class="fas fa-bell"></i>
-                                    </button>
+                                    <small class="text-muted">{{ $compliance->documentType->description }}</small>
+                                </td>
+                                <td>
+                                    @if($compliance->self_evaluation_status === 'Complied')
+                                        <span class="badge bg-success">Complied</span>
+                                    @else
+                                        <span class="badge bg-danger">Not Complied</span>
                                     @endif
+                                    
+                                    @if($compliance->approval_status)
+                                        <br>
+                                        @if($compliance->approval_status === 'approved')
+                                            <small class="text-success">
+                                                <i class="fas fa-check-circle"></i> Approved
+                                            </small>
+                                        @elseif($compliance->approval_status === 'rejected')
+                                            <small class="text-danger">
+                                                <i class="fas fa-times-circle"></i> Rejected
+                                            </small>
+                                        @else
+                                            <small class="text-warning">
+                                                <i class="fas fa-clock"></i> Pending Review
+                                            </small>
+                                        @endif
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($compliance->evidence_link)
+                                        <a href="{{ $compliance->evidence_link }}" target="_blank" class="text-primary">
+                                            <i class="fas fa-external-link-alt me-1"></i>View Link
+                                        </a>
+                                    @else
+                                        <span class="text-muted">No link</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($compliance->evidence_link && $compliance->id)
+                                        @if($compliance->approval_status !== 'approved')
+                                            <button class="btn btn-sm btn-success me-1 approve-btn" 
+                                                    data-compliance-id="{{ $compliance->id }}" 
+                                                    data-type="semester">
+                                                <i class="fas fa-check"></i> Approve
+                                            </button>
+                                        @endif
+                                        @if($compliance->approval_status !== 'rejected')
+                                            <button class="btn btn-sm btn-danger reject-btn" 
+                                                    data-compliance-id="{{ $compliance->id }}" 
+                                                    data-type="semester">
+                                                <i class="fas fa-times"></i> Reject
+                                            </button>
+                                        @endif
+                                    @else
+                                        <span class="text-muted small">No link submitted</span>
+                                    @endif
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Assigned Subjects -->
+                @if($data['assigned_subjects']->count() > 0)
+                    <h6 class="mb-3">
+                        <i class="fas fa-book me-2"></i>
+                        Assigned Subjects ({{ $data['assigned_subjects']->count() }})
+                    </h6>
+                    
+                    <div class="row">
+                        @foreach($data['assigned_subjects'] as $subjectData)
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">{{ $subjectData['subject']->code }}</h6>
+                                    <small class="text-muted">{{ $subjectData['subject']->name }}</small>
                                 </div>
-                            </td>
-                        </tr>
+                                <div class="card-body p-2">
+                                    <button class="btn btn-sm btn-outline-primary w-100 toggle-subject-compliance" 
+                                            data-bs-toggle="collapse" 
+                                            data-bs-target="#subject-{{ $data['faculty']->id }}-{{ $subjectData['subject']->id }}"
+                                            aria-expanded="false">
+                                        <i class="fas fa-eye me-1"></i>View Requirements
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                         @endforeach
-                    </tbody>
-                </table>
+                    </div>
+
+                    <!-- Subject-specific Requirements Compliance Tables (Collapsible) -->
+                    @foreach($data['assigned_subjects'] as $subjectData)
+                    <div class="collapse mt-3" id="subject-{{ $data['faculty']->id }}-{{ $subjectData['subject']->id }}">
+                        <div class="card border-info">
+                            <div class="card-header bg-info text-white">
+                                <h6 class="mb-0">
+                                    Subject-specific Requirements Compliance: {{ $subjectData['subject']->code }}
+                                </h6>
+                                <small>{{ $subjectData['subject']->name }}</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover">
+                                        <thead class="table-secondary">
+                                            <tr>
+                                                <th>Document Type</th>
+                                                <th>Status</th>
+                                                <th>Link</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($subjectData['compliances'] as $compliance)
+                                            <tr>
+                                                <td>
+                                                    <strong>{{ $compliance->documentType->name }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ $compliance->documentType->description }}</small>
+                                                </td>
+                                                <td>
+                                                    @if($compliance->self_evaluation_status === 'Complied')
+                                                        <span class="badge bg-success">Complied</span>
+                                                    @else
+                                                        <span class="badge bg-danger">Not Complied</span>
+                                                    @endif
+                                                    
+                                                    @if($compliance->approval_status)
+                                                        <br>
+                                                        @if($compliance->approval_status === 'approved')
+                                                            <small class="text-success">
+                                                                <i class="fas fa-check-circle"></i> Approved
+                                                            </small>
+                                                        @elseif($compliance->approval_status === 'rejected')
+                                                            <small class="text-danger">
+                                                                <i class="fas fa-times-circle"></i> Rejected
+                                                            </small>
+                                                        @else
+                                                            <small class="text-warning">
+                                                                <i class="fas fa-clock"></i> Pending Review
+                                                            </small>
+                                                        @endif
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if($compliance->evidence_link)
+                                                        <a href="{{ $compliance->evidence_link }}" target="_blank" class="text-primary">
+                                                            <i class="fas fa-external-link-alt me-1"></i>View Link
+                                                        </a>
+                                                    @else
+                                                        <span class="text-muted">No link</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if($compliance->evidence_link && $compliance->id)
+                                                        @if($compliance->approval_status !== 'approved')
+                                                            <button class="btn btn-sm btn-success me-1 approve-btn" 
+                                                                    data-compliance-id="{{ $compliance->id }}" 
+                                                                    data-type="subject">
+                                                                <i class="fas fa-check"></i> Approve
+                                                            </button>
+                                                        @endif
+                                                        @if($compliance->approval_status !== 'rejected')
+                                                            <button class="btn btn-sm btn-danger reject-btn" 
+                                                                    data-compliance-id="{{ $compliance->id }}" 
+                                                                    data-type="subject">
+                                                                <i class="fas fa-times"></i> Reject
+                                                            </button>
+                                                        @endif
+                                                    @else
+                                                        <span class="text-muted small">No link submitted</span>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                @else
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        No subjects assigned to this faculty member.
+                    </div>
+                @endif
             </div>
-            @else
-            <div class="text-center py-5">
-                <i class="fas fa-user-graduate fa-3x text-muted mb-3"></i>
-                <h5>No Faculty Found</h5>
-                <p class="text-muted">This program doesn't have any faculty members assigned yet.</p>
+        </div>
+        @endforeach
+    @else
+        <div class="alert alert-warning text-center">
+            <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+            <h5>No Faculty Members Found</h5>
+            <p>There are no faculty members assigned to this program.</p>
+        </div>
+    @endif
+</div>
+
+<!-- Comments Modal -->
+<div class="modal fade" id="commentsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Comments</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            @endif
+            <div class="modal-body">
+                <form id="commentsForm">
+                    <div class="mb-3">
+                        <label class="form-label">Review Comments (Optional)</label>
+                        <textarea class="form-control" id="reviewComments" rows="3" 
+                                  placeholder="Add comments about this compliance submission..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="submitAction">Submit</button>
+            </div>
         </div>
     </div>
 </div>
 
-<style>
-.bg-orange {
-    background-color: #fd7e14 !important;
-}
-
-.badge-sm {
-    font-size: 0.7em;
-}
-
-.avatar-initial {
-    font-weight: bold;
-}
-</style>
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('facultySearch');
-    const statusFilter = document.getElementById('statusFilter');
-    const table = document.getElementById('facultyTable');
-    const rows = table.querySelectorAll('tbody tr');
+    let currentAction = null;
+    let currentComplianceId = null;
+    let currentType = null;
 
-    function filterTable() {
-        const searchTerm = searchInput.value.toLowerCase();
-        const statusValue = statusFilter.value;
-
-        rows.forEach(row => {
-            const facultyName = row.querySelector('.faculty-name').textContent.toLowerCase();
-            const status = row.getAttribute('data-status');
+    // Handle approve buttons
+    document.querySelectorAll('.approve-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            currentAction = 'approve';
+            currentComplianceId = this.dataset.complianceId;
+            currentType = this.dataset.type;
             
-            const matchesSearch = facultyName.includes(searchTerm);
-            const matchesStatus = !statusValue || status === statusValue;
+            document.getElementById('commentsModal').querySelector('.modal-title').textContent = 'Approve Compliance';
+            document.getElementById('reviewComments').placeholder = 'Add approval comments (optional)...';
             
-            if (matchesSearch && matchesStatus) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
+            const modal = new bootstrap.Modal(document.getElementById('commentsModal'));
+            modal.show();
         });
-    }
+    });
 
-    searchInput.addEventListener('keyup', filterTable);
-    statusFilter.addEventListener('change', filterTable);
+    // Handle reject buttons
+    document.querySelectorAll('.reject-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            currentAction = 'reject';
+            currentComplianceId = this.dataset.complianceId;
+            currentType = this.dataset.type;
+            
+            document.getElementById('commentsModal').querySelector('.modal-title').textContent = 'Reject Compliance';
+            document.getElementById('reviewComments').placeholder = 'Add rejection reason...';
+            
+            const modal = new bootstrap.Modal(document.getElementById('commentsModal'));
+            modal.show();
+        });
+    });
+
+    // Handle submit action
+    document.getElementById('submitAction').addEventListener('click', function() {
+        const comments = document.getElementById('reviewComments').value;
+        
+        if (!currentAction || !currentComplianceId || !currentType) {
+            alert('Invalid action');
+            return;
+        }
+
+        // Construct URL based on type and action
+        const url = `/monitor/${currentType}-compliance/${currentComplianceId}/${currentAction}`;
+        
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                comments: comments
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('commentsModal'));
+                modal.hide();
+                
+                // Show success message
+                showToast(data.message, 'success');
+                
+                // Refresh page to show updated status
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                showToast(data.error || 'Error processing request', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error processing request', 'error');
+        });
+    });
+
+    // Clear modal on close
+    document.getElementById('commentsModal').addEventListener('hidden.bs.modal', function () {
+        document.getElementById('reviewComments').value = '';
+        currentAction = null;
+        currentComplianceId = null;
+        currentType = null;
+    });
 });
 
-function sendReminder(facultyId) {
-    // Implement reminder functionality
-    alert('Reminder sent to faculty member!');
+function showToast(message, type = 'info') {
+    const toastHtml = `
+        <div class="toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `;
+    
+    let toastContainer = document.querySelector('.toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        document.body.appendChild(toastContainer);
+    }
+    
+    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+    
+    const toastElement = toastContainer.lastElementChild;
+    const toast = new bootstrap.Toast(toastElement);
+    toast.show();
+    
+    toastElement.addEventListener('hidden.bs.toast', () => {
+        toastElement.remove();
+    });
 }
 </script>
 @endsection

@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\ComplianceSubmission;
 use App\Models\DocumentType;
 use App\Models\Semester;
+use App\Models\UserLog;
 
 class DashboardController extends Controller
 {
@@ -57,6 +58,10 @@ class DashboardController extends Controller
             'pending_submissions' => ComplianceSubmission::where('status', 'pending')->count(),
             'approved_submissions' => ComplianceSubmission::where('status', 'approved')->count(),
             'active_semester' => Semester::where('is_active', true)->first(),
+            'recent_activities' => UserLog::with(['user.role'])
+                                         ->orderBy('created_at', 'desc')
+                                         ->limit(10)
+                                         ->get(),
         ];
     }
 

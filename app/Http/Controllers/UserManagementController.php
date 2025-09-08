@@ -158,7 +158,8 @@ class UserManagementController extends Controller
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'role_id' => 'required|exists:roles,id',
             'department_id' => 'nullable|exists:departments,id',
-            'faculty_type' => 'nullable|in:regular,visiting,part-time'
+            'faculty_type' => 'nullable|in:regular,visiting,part-time',
+            'password' => 'nullable|string|min:8|confirmed'
         ]);
         
         $updateData = [
@@ -168,12 +169,21 @@ class UserManagementController extends Controller
             'department_id' => $request->department_id,
             'faculty_type' => $request->faculty_type,
         ];
-        
+
+        // Handle password update
         if ($request->filled('password')) {
-            $request->validate(['password' => 'string|min:8|confirmed']);
             $updateData['password'] = Hash::make($request->password);
         }
         
+        // Handle active status (email verification)
+        if ($request->has('is_active')) {
+            if (!$user->email_verified_at) {
+                $updateData['email_verified_at'] = now();
+            }
+        } else {
+            $updateData['email_verified_at'] = null;
+        }
+
         $user->update($updateData);
         
         return redirect()->route('users.index')->with('success', 'User updated successfully.');

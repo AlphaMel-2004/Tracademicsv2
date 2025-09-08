@@ -180,11 +180,14 @@
 <div class="row">
     <div class="col-12">
         <div class="card">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-list me-2"></i>
+                    <i class="fas fa-history me-2"></i>
                     Recent System Activity
                 </h5>
+                <a href="{{ route('settings.user-logs') }}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-external-link-alt me-1"></i>View All
+                </a>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -197,12 +200,48 @@
                                 <th>Status</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr>
-                                <td colspan="4" class="text-center text-muted">
-                                    No recent activity to display
-                                </td>
-                            </tr>
+                        <tbody id="recent-activity-table">
+                            @if(isset($dashboardData['recent_activities']) && $dashboardData['recent_activities']->count() > 0)
+                                @foreach($dashboardData['recent_activities'] as $activity)
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px; font-size: 12px;">
+                                                {{ strtoupper(substr($activity->user->name, 0, 1)) }}
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold">{{ $activity->user->name }}</div>
+                                                <small class="text-muted">{{ $activity->user->role->name ?? 'N/A' }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <span class="badge bg-{{ $activity->action == 'login' ? 'success' : ($activity->action == 'logout' ? 'secondary' : ($activity->action == 'create' ? 'primary' : ($activity->action == 'update' ? 'info' : 'warning'))) }}">
+                                                {{ ucfirst($activity->action) }}
+                                            </span>
+                                            <div class="small text-muted mt-1">{{ $activity->description }}</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div>{{ $activity->created_at->format('M d, Y') }}</div>
+                                        <small class="text-muted">{{ $activity->created_at->format('h:i A') }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i>Completed
+                                        </span>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            @else
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-4">
+                                        <i class="fas fa-history fa-2x mb-2 d-block"></i>
+                                        No recent activity to display
+                                    </td>
+                                </tr>
+                            @endif
                         </tbody>
                     </table>
                 </div>
@@ -210,3 +249,43 @@
         </div>
     </div>
 </div>
+
+<script>
+// Auto-refresh recent activity every 30 seconds
+setInterval(function() {
+    fetch('{{ route("dashboard") }}', {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+        }
+    })
+    .then(response => response.text())
+    .then(data => {
+        // Parse the response to extract just the recent activity table
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(data, 'text/html');
+        const newActivityTable = doc.querySelector('#recent-activity-table');
+        
+        if (newActivityTable) {
+            const currentActivityTable = document.querySelector('#recent-activity-table');
+            if (currentActivityTable) {
+                currentActivityTable.innerHTML = newActivityTable.innerHTML;
+            }
+        }
+    })
+    .catch(error => {
+        console.log('Auto-refresh failed:', error);
+    });
+}, 30000); // Refresh every 30 seconds
+
+// Add visual indicator for real-time updates
+document.addEventListener('DOMContentLoaded', function() {
+    const activityHeader = document.querySelector('.card-header h5');
+    if (activityHeader) {
+        const indicator = document.createElement('small');
+        indicator.className = 'text-muted ms-2';
+        indicator.innerHTML = '<i class="fas fa-circle text-success" style="font-size: 6px;"></i> Live';
+        activityHeader.appendChild(indicator);
+    }
+});
+</script>

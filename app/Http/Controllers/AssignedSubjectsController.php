@@ -8,6 +8,9 @@ use App\Models\Subject;
 use App\Models\FacultyAssignment;
 use App\Models\DocumentType;
 use App\Models\ComplianceSubmission;
+use App\Models\FacultySemesterCompliance;
+use App\Models\SubjectCompliance;
+use App\Models\Semester;
 
 class AssignedSubjectsController extends Controller
 {
@@ -68,7 +71,43 @@ class AssignedSubjectsController extends Controller
             ];
         });
         
-        return view('subjects.assigned', compact('subjects'));
+        // Get current semester and semester-wide compliance data
+        $currentSemester = Semester::where('is_active', true)->first();
+        $semesterCompliances = collect();
+        
+        if ($currentSemester) {
+            // Get semester document types
+            $semesterDocTypes = DocumentType::where('submission_type', 'semester')->get();
+            
+            // Get existing compliance records for this user and semester
+            $existingCompliances = FacultySemesterCompliance::where('user_id', $user->id)
+                ->where('semester_id', $currentSemester->id)
+                ->with('documentType')
+                ->get()
+                ->keyBy('document_type_id');
+            
+            // Create or get compliance records for each semester document type
+            foreach ($semesterDocTypes as $docType) {
+                if ($existingCompliances->has($docType->id)) {
+                    // Use existing compliance record
+                    $semesterCompliances->push($existingCompliances->get($docType->id));
+                } else {
+                    // Create new compliance record
+                    $compliance = FacultySemesterCompliance::create([
+                        'user_id' => $user->id,
+                        'document_type_id' => $docType->id,
+                        'semester_id' => $currentSemester->id,
+                        'actual_situation' => '',
+                        'evidence_link' => '',
+                        'self_evaluation_status' => 'Not Complied',
+                    ]);
+                    $compliance->load('documentType');
+                    $semesterCompliances->push($compliance);
+                }
+            }
+        }
+        
+        return view('subjects.assigned', compact('subjects', 'semesterCompliances', 'currentSemester'));
     }
     
     /**
@@ -92,25 +131,48 @@ class AssignedSubjectsController extends Controller
             abort(404, 'Subject not assigned to you or does not exist');
         }
         
-        // Get document types and existing submissions
-        $documentTypes = DocumentType::all();
-        $submissions = ComplianceSubmission::where('user_id', $user->id)
+        // Get only subject-specific document types (exclude semester-wide ones)
+        $documentTypes = DocumentType::where('submission_type', 'subject')->get();
+        
+        // Get existing subject compliance records
+        $existingCompliances = SubjectCompliance::where('user_id', $user->id)
             ->where('subject_id', $subject->id)
             ->with('documentType')
             ->get()
             ->keyBy('document_type_id');
         
-        $requirements = $documentTypes->map(function ($docType) use ($submissions) {
-            $submission = $submissions->get($docType->id);
-            
+        // Create or get compliance records for each subject document type
+        $subjectCompliances = collect();
+        foreach ($documentTypes as $docType) {
+            if ($existingCompliances->has($docType->id)) {
+                // Use existing compliance record
+                $subjectCompliances->push($existingCompliances->get($docType->id));
+            } else {
+                // Create new compliance record
+                $compliance = SubjectCompliance::create([
+                    'user_id' => $user->id,
+                    'subject_id' => $subject->id,
+                    'document_type_id' => $docType->id,
+                    'actual_situation' => '',
+                    'evidence_link' => '',
+                    'self_evaluation_status' => 'Not Complied',
+                ]);
+                $compliance->load('documentType');
+                $subjectCompliances->push($compliance);
+            }
+        }
+        
+        // Map compliance records to requirements format
+        $requirements = $subjectCompliances->map(function ($compliance) {
             return [
-                'document_type' => $docType,
-                'submission' => $submission,
-                'status' => $submission ? $submission->status : 'not_submitted',
-                'submitted_at' => $submission ? $submission->submitted_at : null,
-                'review_comments' => $submission ? $submission->review_comments : null,
-                'file_path' => $submission ? $submission->file_path : null,
-                'link_url' => $submission ? $submission->link_url : null
+                'compliance' => $compliance,
+                'document_type' => $compliance->documentType,
+                'submission' => null, // Keep for compatibility but not used in new format
+                'status' => $compliance->self_evaluation_status === 'Complied' ? 'approved' : 'not_submitted',
+                'submitted_at' => $compliance->updated_at,
+                'review_comments' => null,
+                'file_path' => null,
+                'link_url' => $compliance->evidence_link
             ];
         });
         
