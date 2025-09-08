@@ -48,9 +48,10 @@ class SystemSettingsController extends Controller
             abort(403, 'Unauthorized access');
         }
         
-        $semesters = Semester::orderBy('start_date', 'desc')->paginate(10);
+        $activeSemester = Semester::with('semesterSessions')->where('is_active', true)->first();
+        $semesters = Semester::with('semesterSessions')->orderBy('start_date', 'desc')->paginate(10);
         
-        return view('system-settings.semesters', compact('semesters'));
+        return view('system-settings.semesters', compact('semesters', 'activeSemester'));
     }
 
     /**
@@ -66,7 +67,6 @@ class SystemSettingsController extends Controller
         
         $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'required|string|max:20|unique:semesters',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
             'academic_year' => 'required|string|max:20'
@@ -79,7 +79,6 @@ class SystemSettingsController extends Controller
         
         Semester::create([
             'name' => $request->name,
-            'code' => $request->code,
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
             'academic_year' => $request->academic_year,
@@ -217,7 +216,7 @@ class SystemSettingsController extends Controller
             abort(403, 'Unauthorized access');
         }
         
-        $query = UserLog::with('user')->orderBy('created_at', 'desc');
+        $query = UserLog::with(['user.role'])->orderBy('created_at', 'desc');
         
         // Apply filters
         if ($request->filled('user_id')) {

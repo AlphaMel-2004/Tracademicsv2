@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Models\Subject;
 use App\Models\Program;
 use App\Models\User;
+use App\Models\FacultyAssignment;
+use App\Models\Semester;
 
 class SubjectManagementController extends Controller
 {
@@ -22,7 +25,7 @@ class SubjectManagementController extends Controller
             abort(403, 'Unauthorized access');
         }
         
-        $query = Subject::with(['program', 'faculty']);
+    $query = Subject::with(['program', 'facultyAssignments.user']);
         
         // Apply filters
         if ($request->filled('search')) {
@@ -53,9 +56,8 @@ class SubjectManagementController extends Controller
         // Calculate statistics
         $stats = [
             'total' => Subject::count(),
-            'active' => Subject::where('is_active', true)->count(),
-            'assigned' => Subject::whereNotNull('faculty_id')->count(),
-            'unassigned' => Subject::whereNull('faculty_id')->count()
+            'assigned' => DB::table('faculty_assignments')->distinct('subject_id')->count('subject_id'),
+            'unassigned' => Subject::count() - DB::table('faculty_assignments')->distinct('subject_id')->count('subject_id')
         ];
         
         return view('subjects.index', compact('subjects', 'programs', 'availableFaculty', 'stats'));
@@ -84,22 +86,17 @@ class SubjectManagementController extends Controller
         $request->validate([
             'code' => 'required|string|max:20|unique:subjects',
             'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
             'units' => 'required|integer|min:1|max:10',
             'program_id' => 'required|exists:programs,id',
-            'year_level' => 'required|integer|min:1|max:4',
-            'semester' => 'required|in:1st Semester,2nd Semester,Summer'
+            'year_level' => 'required|integer|min:1|max:4'
         ]);
         
         $subject = Subject::create([
             'code' => $request->code,
             'name' => $request->name,
-            'description' => $request->description,
             'units' => $request->units,
             'program_id' => $request->program_id,
-            'year_level' => $request->year_level,
-            'semester' => $request->semester,
-            'is_active' => true
+            'year_level' => $request->year_level
         ]);
         
         return redirect()->route('subjects.index')->with('success', 'Subject created successfully.');
@@ -110,7 +107,7 @@ class SubjectManagementController extends Controller
      */
     public function show(Subject $subject)
     {
-        $subject->load(['program', 'faculty']);
+        $subject->load(['program', 'facultyAssignments.user']);
         return view('subjects.show', compact('subject'));
     }
 
@@ -172,7 +169,29 @@ class SubjectManagementController extends Controller
             return back()->with('error', 'Selected user is not a faculty member.');
         }
 
-        $subject->update(['faculty_id' => $request->faculty_id]);
+        // Get the active semester
+        $activeSemester = Semester::where('is_active', true)->first();
+        if (!$activeSemester) {
+            return back()->with('error', 'No active semester found.');
+        }
+
+        // Check if faculty is already assigned to this subject
+        $existingAssignment = FacultyAssignment::where('user_id', $request->faculty_id)
+            ->where('subject_id', $subject->id)
+            ->where('semester_id', $activeSemester->id)
+            ->first();
+
+        if ($existingAssignment) {
+            return back()->with('error', 'Faculty is already assigned to this subject.');
+        }
+
+        // Create faculty assignment
+        FacultyAssignment::create([
+            'user_id' => $request->faculty_id,
+            'subject_id' => $subject->id,
+            'semester_id' => $activeSemester->id,
+            'program_id' => $subject->program_id,
+        ]);
 
         return back()->with('success', 'Faculty assigned successfully.');
     }

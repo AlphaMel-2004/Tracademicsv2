@@ -80,6 +80,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the program that owns the user.
+     */
+    public function program(): BelongsTo
+    {
+        return $this->belongsTo(Program::class);
+    }
+
+    /**
      * Get the faculty assignments for the user.
      */
     public function facultyAssignments(): HasMany

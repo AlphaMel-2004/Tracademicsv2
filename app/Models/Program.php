@@ -49,4 +49,12 @@ class Program extends Model
     {
         return $this->hasMany(FacultyAssignment::class);
     }
+
+    /**
+     * Get the users that belong to the program.
+     */
+    public function users(): HasMany
+    {
+        return $this->hasMany(User::class);
+    }
 }

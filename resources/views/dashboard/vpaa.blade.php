@@ -106,9 +106,9 @@
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    <a href="#" class="btn btn-success">
-                        <i class="fas fa-university me-2"></i>
-                        University Overview
+                    <a href="{{ route('monitor.index') }}" class="btn btn-success">
+                        <i class="fas fa-monitor me-2"></i>
+                        Monitor All Departments
                     </a>
                     <a href="#" class="btn btn-outline-success">
                         <i class="fas fa-building me-2"></i>
@@ -117,6 +117,49 @@
                     <a href="#" class="btn btn-outline-info">
                         <i class="fas fa-users me-2"></i>
                         Faculty Performance
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Monitor Quick Access -->
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    University-wide Compliance Monitoring
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">Monitor compliance status across all departments and programs in the university.</p>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <i class="fas fa-building fa-3x text-primary mb-2"></i>
+                            <h6>All Departments</h6>
+                            <p class="small text-muted">View department-wise compliance overview</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <i class="fas fa-graduation-cap fa-3x text-success mb-2"></i>
+                            <h6>Programs & Faculty</h6>
+                            <p class="small text-muted">Drill down to program and faculty levels</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <i class="fas fa-chart-line fa-3x text-info mb-2"></i>
+                            <h6>Real-time Analytics</h6>
+                            <p class="small text-muted">Live compliance rates and statistics</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{{ route('monitor.index') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-monitor me-2"></i>Start Monitoring
                     </a>
                 </div>
             </div>

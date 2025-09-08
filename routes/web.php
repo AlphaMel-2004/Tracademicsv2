@@ -12,6 +12,9 @@ use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\DepartmentManagementController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\MonitorController;
+use App\Http\Controllers\AssignedSubjectsController;
+use App\Http\Controllers\ProgramsManagementController;
 
 // Redirect root to login
 Route::get('/', function () {
@@ -55,6 +58,9 @@ Route::middleware(['auth'])->group(function () {
         // My submissions
         Route::get('/my-submissions', [ComplianceController::class, 'mySubmissions'])->name('my-submissions');
         Route::put('/submissions/{submission}', [ComplianceController::class, 'update'])->name('update');
+        
+        // User submissions (for Program Heads and above)
+        Route::get('/user/{user}/submissions', [ComplianceController::class, 'userSubmissions'])->name('user-submissions');
         
         // File and link management
         Route::delete('/documents/{document}', [ComplianceController::class, 'deleteFile'])->name('delete-file');
@@ -137,5 +143,40 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/{department}', [DepartmentManagementController::class, 'destroy'])->name('destroy');
         Route::get('/{department}/programs', [DepartmentManagementController::class, 'programs'])->name('programs');
         Route::post('/{department}/programs', [DepartmentManagementController::class, 'storeProgram'])->name('programs.store');
+    });
+    
+    // Monitor routes (VPAA, Dean, Program Head)
+    Route::prefix('monitor')->name('monitor.')->group(function () {
+        // VPAA Monitor Routes
+        Route::get('/', [MonitorController::class, 'index'])->name('index');
+        Route::get('/department/{department}', [MonitorController::class, 'department'])->name('department');
+        Route::get('/program/{program}/faculty', [MonitorController::class, 'programFaculty'])->name('program.faculty');
+        
+        // Dean Monitor Routes
+        Route::get('/faculty', [MonitorController::class, 'faculty'])->name('faculty');
+        Route::get('/dean/program/{program}/faculty', [MonitorController::class, 'deanProgramFaculty'])->name('dean.program.faculty');
+        
+        // Program Head Monitor Routes
+        Route::get('/compliance', [MonitorController::class, 'compliance'])->name('compliance');
+    });
+    
+    // Faculty Assigned Subjects routes
+    Route::prefix('subjects')->name('subjects.')->group(function () {
+        Route::get('/assigned', [AssignedSubjectsController::class, 'index'])->name('assigned');
+        Route::get('/assigned/{subject}', [AssignedSubjectsController::class, 'show'])->name('assigned.show');
+    });
+    
+    // Dean Reports routes
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/dean', [ReportController::class, 'deanReports'])->name('dean');
+        Route::get('/dean/pdf', [ReportController::class, 'generateDeanPDF'])->name('dean.pdf');
+    });
+    
+    // Programs Management routes (MIS only)
+    Route::middleware(['auth'])->prefix('programs-management')->name('programs-management.')->group(function () {
+        Route::get('/', [ProgramsManagementController::class, 'index'])->name('index');
+        Route::get('/department/{department}', [ProgramsManagementController::class, 'department'])->name('department');
+        Route::get('/department/{department}/create', [ProgramsManagementController::class, 'create'])->name('create');
+        Route::post('/department/{department}', [ProgramsManagementController::class, 'store'])->name('store');
     });
 });

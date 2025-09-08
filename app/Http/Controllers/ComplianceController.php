@@ -12,6 +12,7 @@ use App\Models\ComplianceLink;
 use App\Models\DocumentType;
 use App\Models\Subject;
 use App\Models\Semester;
+use App\Models\User;
 
 class ComplianceController extends Controller
 {
@@ -298,5 +299,36 @@ class ComplianceController extends Controller
             : 'Submission rejected successfully!';
 
         return back()->with('success', $message);
+    }
+
+    /**
+     * View submissions for a specific user (for Program Heads)
+     */
+    public function userSubmissions($userId)
+    {
+        $user = Auth::user();
+        
+        // Only Program Heads and above can access this
+        if (!in_array($user->role->name, ['Program Head', 'Dean', 'VPAA', 'MIS'])) {
+            abort(403, 'Unauthorized access');
+        }
+
+        // For Program Heads, ensure the user belongs to their program
+        if ($user->role->name === 'Program Head') {
+            $facultyUser = User::find($userId);
+            if (!$facultyUser || !$facultyUser->facultyAssignments()->where('program_id', $user->program_id)->exists()) {
+                abort(403, 'You can only view submissions for faculty in your program');
+            }
+        }
+
+        $facultyUser = User::with(['complianceSubmissions.complianceDocuments', 'complianceSubmissions.complianceLinks'])
+            ->findOrFail($userId);
+
+        $submissions = $facultyUser->complianceSubmissions()
+            ->with(['documentType', 'complianceDocuments', 'complianceLinks'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('compliance.user-submissions', compact('facultyUser', 'submissions'));
     }
 }

@@ -142,46 +142,77 @@
                     <table class="table table-hover mb-0">
                         <thead class="table-dark">
                             <tr>
-                                <th>Timestamp</th>
-                                <th>User</th>
-                                <th>Action</th>
-                                <th>Description</th>
-                                <th>IP Address</th>
-                                <th>Details</th>
+                                <th width="15%">Timestamp</th>
+                                <th width="25%">User Name</th>
+                                <th width="12%">Role</th>
+                                <th width="15%">Activity Type</th>
+                                <th width="20%">Description</th>
+                                <th width="8%">IP Address</th>
+                                <th width="5%">Details</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($userLogs as $log)
                                 <tr>
                                     <td>
-                                        <div class="small">
-                                            <strong>{{ $log->created_at->format('M d, Y') }}</strong><br>
-                                            <span class="text-muted">{{ $log->created_at->format('h:i A') }}</span>
+                                        <div class="text-nowrap">
+                                            <div><strong>{{ $log->created_at->format('M d, Y') }}</strong></div>
+                                            <div class="text-muted small">{{ $log->created_at->format('h:i A') }}</div>
                                         </div>
                                     </td>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <div class="avatar-sm rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2">
-                                                {{ substr($log->user->name, 0, 1) }}
+                                            <div class="avatar-sm rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2 flex-shrink-0" style="width: 35px; height: 35px; font-size: 14px;">
+                                                {{ strtoupper(substr($log->user->name, 0, 1)) }}
                                             </div>
-                                            <div>
-                                                <strong>{{ $log->user->name }}</strong><br>
-                                                <small class="text-muted">{{ $log->user->email }}</small>
+                                            <div class="min-width-0">
+                                                <div class="fw-bold text-truncate">{{ $log->user->name }}</div>
+                                                <div class="text-muted small text-truncate">{{ $log->user->email }}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td>
-                                        <span class="badge bg-{{ $log->action == 'login' ? 'success' : ($log->action == 'logout' ? 'secondary' : ($log->action == 'delete' ? 'danger' : 'primary')) }}">
+                                        @php
+                                            $roleName = $log->user->role->name ?? 'Unknown';
+                                            $badgeColor = match(strtolower($roleName)) {
+                                                'admin' => 'danger',
+                                                'mis' => 'warning',
+                                                'faculty' => 'info',
+                                                'vpaa' => 'success',
+                                                'dean' => 'primary',
+                                                'program head' => 'secondary',
+                                                default => 'dark'
+                                            };
+                                        @endphp
+                                        <span class="badge bg-{{ $badgeColor }} text-nowrap">
+                                            {{ strtoupper($roleName) }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @php
+                                            $actionColor = match(strtolower($log->action)) {
+                                                'login' => 'success',
+                                                'logout' => 'secondary',
+                                                'create' => 'primary',
+                                                'update' => 'info',
+                                                'delete' => 'danger',
+                                                'view' => 'light',
+                                                default => 'primary'
+                                            };
+                                        @endphp
+                                        <span class="badge bg-{{ $actionColor }} text-nowrap">
                                             {{ ucfirst($log->action) }}
                                         </span>
                                     </td>
-                                    <td>{{ $log->description }}</td>
                                     <td>
-                                        <code class="small">{{ $log->ip_address ?? 'N/A' }}</code>
+                                        <div class="text-wrap">{{ $log->description }}</div>
                                     </td>
                                     <td>
+                                        <code class="small text-nowrap">{{ $log->ip_address ?? 'N/A' }}</code>
+                                    </td>
+                                    <td class="text-center">
                                         @if($log->data)
-                                            <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#logDetailsModal{{ $log->id }}">
+                                            <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#logDetailsModal{{ $log->id }}" title="View Details">
                                                 <i class="fas fa-info-circle"></i>
                                             </button>
                                         @else
@@ -196,25 +227,75 @@
                                     <div class="modal-dialog modal-lg">
                                         <div class="modal-content">
                                             <div class="modal-header">
-                                                <h5 class="modal-title">Log Details</h5>
+                                                <h5 class="modal-title">
+                                                    <i class="fas fa-info-circle me-2"></i>Activity Details
+                                                </h5>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                             </div>
                                             <div class="modal-body">
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <strong>User:</strong> {{ $log->user->name }}<br>
-                                                        <strong>Action:</strong> {{ ucfirst($log->action) }}<br>
-                                                        <strong>Time:</strong> {{ $log->created_at->format('M d, Y h:i A') }}<br>
-                                                        <strong>IP Address:</strong> {{ $log->ip_address ?? 'N/A' }}
+                                                <!-- Activity Summary -->
+                                                <div class="card mb-3">
+                                                    <div class="card-header bg-light">
+                                                        <h6 class="mb-0">Activity Summary</h6>
                                                     </div>
-                                                    <div class="col-md-6">
-                                                        <strong>User Agent:</strong><br>
-                                                        <small class="text-muted">{{ $log->user_agent ?? 'N/A' }}</small>
+                                                    <div class="card-body">
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <div class="mb-2">
+                                                                    <strong>User:</strong> {{ $log->user->name }}
+                                                                </div>
+                                                                <div class="mb-2">
+                                                                    <strong>Email:</strong> {{ $log->user->email }}
+                                                                </div>
+                                                                <div class="mb-2">
+                                                                    <strong>Role:</strong> 
+                                                                    <span class="badge bg-info">{{ $log->user->role->name ?? 'Unknown' }}</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <div class="mb-2">
+                                                                    <strong>Action:</strong> 
+                                                                    <span class="badge bg-primary">{{ ucfirst($log->action) }}</span>
+                                                                </div>
+                                                                <div class="mb-2">
+                                                                    <strong>Date & Time:</strong> {{ $log->created_at->format('M d, Y h:i A') }}
+                                                                </div>
+                                                                <div class="mb-2">
+                                                                    <strong>IP Address:</strong> 
+                                                                    <code>{{ $log->ip_address ?? 'N/A' }}</code>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="mt-3">
+                                                            <strong>Description:</strong><br>
+                                                            <div class="bg-light p-2 rounded">{{ $log->description }}</div>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <hr>
-                                                <strong>Additional Data:</strong>
-                                                <pre class="bg-light p-3 rounded mt-2"><code>{{ json_encode($log->data, JSON_PRETTY_PRINT) }}</code></pre>
+
+                                                <!-- Technical Details -->
+                                                @if($log->data)
+                                                <div class="card">
+                                                    <div class="card-header bg-light">
+                                                        <h6 class="mb-0">Technical Details</h6>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        @if($log->user_agent)
+                                                            <div class="mb-3">
+                                                                <strong>User Agent:</strong><br>
+                                                                <small class="text-muted">{{ $log->user_agent }}</small>
+                                                            </div>
+                                                        @endif
+                                                        
+                                                        <div class="mb-3">
+                                                            <strong>Raw Data:</strong>
+                                                            <div class="bg-dark text-light p-3 rounded mt-2" style="font-family: 'Courier New', monospace; font-size: 12px; max-height: 300px; overflow-y: auto;">
+                                                                <pre class="text-light mb-0">{{ json_encode($log->data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                @endif
                                             </div>
                                             <div class="modal-footer">
                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -250,6 +331,75 @@
     height: 35px;
     font-size: 14px;
     font-weight: bold;
+}
+
+.table td {
+    vertical-align: middle;
+    padding: 0.75rem 0.5rem;
+}
+
+.text-nowrap {
+    white-space: nowrap;
+}
+
+.text-wrap {
+    word-wrap: break-word;
+    max-width: 200px;
+}
+
+.min-width-0 {
+    min-width: 0;
+    flex: 1;
+}
+
+.badge {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.5rem;
+}
+
+.table-responsive {
+    border-radius: 0.375rem;
+}
+
+.modal-dialog {
+    max-width: 900px;
+}
+
+pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.bg-dark pre {
+    color: #f8f9fa !important;
+    margin: 0;
+}
+
+/* Ensure proper column widths */
+.table th:nth-child(1), .table td:nth-child(1) { width: 15%; }
+.table th:nth-child(2), .table td:nth-child(2) { width: 25%; }
+.table th:nth-child(3), .table td:nth-child(3) { width: 12%; }
+.table th:nth-child(4), .table td:nth-child(4) { width: 15%; }
+.table th:nth-child(5), .table td:nth-child(5) { width: 20%; }
+.table th:nth-child(6), .table td:nth-child(6) { width: 8%; }
+.table th:nth-child(7), .table td:nth-child(7) { width: 5%; }
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.85rem;
+    }
+    
+    .avatar-sm {
+        width: 30px;
+        height: 30px;
+        font-size: 12px;
+    }
+    
+    .badge {
+        font-size: 0.65rem;
+        padding: 0.2rem 0.4rem;
+    }
 }
 </style>
 @endsection

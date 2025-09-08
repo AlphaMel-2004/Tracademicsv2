@@ -185,12 +185,9 @@
                         <li><a class="dropdown-item" href="{{ route('profile.password') }}"><i class="fas fa-lock me-2"></i>Password Settings</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
-                            <form method="POST" action="{{ route('logout') }}" class="d-inline">
-                                @csrf
-                                <button type="submit" class="dropdown-item">
-                                    <i class="fas fa-sign-out-alt me-2"></i>Logout
-                                </button>
-                            </form>
+                            <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#logoutModal">
+                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                            </button>
                         </li>
                     </ul>
                 </div>
@@ -213,36 +210,31 @@
                             </a>
                         </li>
                         
-                        @if(Auth::user()->role->name === 'Faculty')
+                        @if(Auth::user()->role->name === 'VPAA')
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('compliance.create') ? 'active' : '' }}" href="{{ route('compliance.create') }}">
-                                <i class="fas fa-upload me-2"></i>Submit Documents
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('compliance.my-submissions') ? 'active' : '' }}" href="{{ route('compliance.my-submissions') }}">
-                                <i class="fas fa-list me-2"></i>My Submissions
+                            <a class="nav-link {{ request()->routeIs('monitor.*') ? 'active' : '' }}" href="{{ route('monitor.index') }}">
+                                <i class="fas fa-monitor me-2"></i>Monitor
                             </a>
                         </li>
                         @endif
                         
-                        @if(in_array(Auth::user()->role->name, ['MIS', 'VPAA', 'Dean', 'Program Head']))
+                        @if(Auth::user()->role->name === 'Dean')
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}" href="{{ route('reports.dashboard') }}">
-                                <i class="fas fa-chart-bar me-2"></i>Reports
+                            <a class="nav-link {{ request()->routeIs('monitor.faculty.*') ? 'active' : '' }}" href="{{ route('monitor.faculty') }}">
+                                <i class="fas fa-users me-2"></i>Monitor Faculty
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('compliance.review') ? 'active' : '' }}" href="{{ route('compliance.review') }}">
-                                <i class="fas fa-eye me-2"></i>Review Submissions
+                            <a class="nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}" href="{{ route('reports.dean') }}">
+                                <i class="fas fa-file-pdf me-2"></i>Reports
                             </a>
                         </li>
                         @endif
                         
                         @if(Auth::user()->role->name === 'Program Head')
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('faculty.*') ? 'active' : '' }}" href="{{ route('faculty.index') }}">
-                                <i class="fas fa-users-cog me-2"></i>Faculty Management
+                            <a class="nav-link {{ request()->routeIs('monitor.compliance.*') ? 'active' : '' }}" href="{{ route('monitor.compliance') }}">
+                                <i class="fas fa-clipboard-check me-2"></i>Monitor Compliances
                             </a>
                         </li>
                         <li class="nav-item">
@@ -252,10 +244,10 @@
                         </li>
                         @endif
                         
-                        @if(in_array(Auth::user()->role->name, ['MIS', 'VPAA', 'Dean']))
+                        @if(Auth::user()->role->name === 'Faculty')
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('departments.*') ? 'active' : '' }}" href="{{ route('departments.index') }}">
-                                <i class="fas fa-building me-2"></i>Department Management
+                            <a class="nav-link {{ request()->routeIs('subjects.assigned') ? 'active' : '' }}" href="{{ route('subjects.assigned') }}">
+                                <i class="fas fa-book-open me-2"></i>Subjects
                             </a>
                         </li>
                         @endif
@@ -264,6 +256,16 @@
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">
                                 <i class="fas fa-users me-2"></i>User Management
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('departments.*') ? 'active' : '' }}" href="{{ route('departments.index') }}">
+                                <i class="fas fa-building me-2"></i>Department Management
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('programs-management.*') ? 'active' : '' }}" href="{{ route('programs-management.index') }}">
+                                <i class="fas fa-graduation-cap me-2"></i>Programs Management
                             </a>
                         </li>
                         <li class="nav-item">
@@ -303,6 +305,38 @@
                 @auth
             </div>
             @endauth
+        </div>
+    </div>
+
+    <!-- Logout Confirmation Modal -->
+    <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="logoutModalLabel">
+                        <i class="fas fa-sign-out-alt me-2"></i>Confirm Logout
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to logout from TracAdemics?</p>
+                    <div class="text-muted small">
+                        <i class="fas fa-info-circle me-1"></i>
+                        You will need to login again to access your account.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>
+                    <form method="POST" action="{{ route('logout') }}" class="d-inline">
+                        @csrf
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-sign-out-alt me-1"></i>Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 

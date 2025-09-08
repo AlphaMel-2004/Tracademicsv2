@@ -20,6 +20,22 @@ class Subject extends Model
     ];
 
     /**
+     * Get all faculty users assigned to this subject.
+     */
+    public function assignedFaculty()
+    {
+        return $this->hasManyThrough(
+            User::class,
+            FacultyAssignment::class,
+            'subject_id', // Foreign key on FacultyAssignment table...
+            'id',         // Foreign key on User table...
+            'id',         // Local key on Subject table...
+            'user_id'     // Local key on FacultyAssignment table...
+        );
+    }
+
+
+    /**
      * Get the program that owns the subject.
      */
     public function program(): BelongsTo

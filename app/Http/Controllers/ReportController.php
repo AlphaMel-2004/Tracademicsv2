@@ -295,4 +295,131 @@ class ReportController extends Controller
         
         return view('reports.department', compact('departmentStats'));
     }
+    
+    /**
+     * Dean Reports Dashboard
+     */
+    public function deanReports()
+    {
+        $user = Auth::user();
+        
+        if ($user->role->name !== 'Dean') {
+            abort(403, 'Unauthorized access');
+        }
+        
+        $department = $user->department;
+        if (!$department) {
+            abort(404, 'No department assigned to this dean');
+        }
+        
+        // Get programs under this dean's department
+        $programs = $department->programs()->with(['users'])->get();
+        
+        $programStats = $programs->map(function ($program) {
+            $facultyIds = $program->users()->whereHas('role', function($query) {
+                $query->where('name', 'Faculty');
+            })->pluck('id');
+            
+            $totalSubmissions = ComplianceSubmission::whereIn('user_id', $facultyIds)->count();
+            $approvedSubmissions = ComplianceSubmission::whereIn('user_id', $facultyIds)
+                ->where('status', 'approved')->count();
+            $pendingSubmissions = ComplianceSubmission::whereIn('user_id', $facultyIds)
+                ->where('status', 'pending')->count();
+            $rejectedSubmissions = ComplianceSubmission::whereIn('user_id', $facultyIds)
+                ->where('status', 'rejected')->count();
+            
+            $complianceRate = $totalSubmissions > 0 ? 
+                round(($approvedSubmissions / $totalSubmissions) * 100, 1) : 0;
+            
+            return [
+                'program' => $program,
+                'total_faculty' => $facultyIds->count(),
+                'total_submissions' => $totalSubmissions,
+                'approved_submissions' => $approvedSubmissions,
+                'pending_submissions' => $pendingSubmissions,
+                'rejected_submissions' => $rejectedSubmissions,
+                'compliance_rate' => $complianceRate
+            ];
+        });
+        
+        // Department overall stats
+        $departmentStats = [
+            'total_programs' => $programs->count(),
+            'total_faculty' => $department->users()->whereHas('role', function($query) {
+                $query->where('name', 'Faculty');
+            })->count(),
+            'total_submissions' => ComplianceSubmission::whereHas('user', function($query) use ($department) {
+                $query->where('department_id', $department->id);
+            })->count(),
+            'approved_submissions' => ComplianceSubmission::whereHas('user', function($query) use ($department) {
+                $query->where('department_id', $department->id);
+            })->where('status', 'approved')->count(),
+        ];
+        
+        $departmentStats['compliance_rate'] = $departmentStats['total_submissions'] > 0 ? 
+            round(($departmentStats['approved_submissions'] / $departmentStats['total_submissions']) * 100, 1) : 0;
+        
+        return view('reports.dean', compact('department', 'programStats', 'departmentStats'));
+    }
+    
+    /**
+     * Generate Dean PDF Report
+     */
+    public function generateDeanPDF()
+    {
+        $user = Auth::user();
+        
+        if ($user->role->name !== 'Dean') {
+            abort(403, 'Unauthorized access');
+        }
+        
+        $department = $user->department;
+        if (!$department) {
+            abort(404, 'No department assigned to this dean');
+        }
+        
+        // Get detailed compliance data
+        $programs = $department->programs()->with(['users.complianceSubmissions'])->get();
+        
+        $reportData = [
+            'department' => $department,
+            'generated_at' => now(),
+            'generated_by' => $user->name,
+            'programs' => $programs->map(function ($program) {
+                $faculty = $program->users()->whereHas('role', function($query) {
+                    $query->where('name', 'Faculty');
+                })->with('complianceSubmissions')->get();
+                
+                $facultyData = $faculty->map(function ($facultyMember) {
+                    $submissions = $facultyMember->complianceSubmissions;
+                    $totalSubmissions = $submissions->count();
+                    $approvedSubmissions = $submissions->where('status', 'approved')->count();
+                    
+                    return [
+                        'name' => $facultyMember->name,
+                        'email' => $facultyMember->email,
+                        'total_submissions' => $totalSubmissions,
+                        'approved_submissions' => $approvedSubmissions,
+                        'compliance_rate' => $totalSubmissions > 0 ? 
+                            round(($approvedSubmissions / $totalSubmissions) * 100, 1) : 0
+                    ];
+                });
+                
+                return [
+                    'name' => $program->name,
+                    'faculty' => $facultyData,
+                    'total_faculty' => $facultyData->count(),
+                    'avg_compliance_rate' => $facultyData->avg('compliance_rate') ?? 0
+                ];
+            })
+        ];
+        
+        // Generate PDF using a view
+        $pdf = app('dompdf.wrapper');
+        $pdf->loadView('reports.dean-pdf', $reportData);
+        
+        $filename = 'dean-report-' . $department->name . '-' . now()->format('Y-m-d') . '.pdf';
+        
+        return $pdf->download($filename);
+    }
 }

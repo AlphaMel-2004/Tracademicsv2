@@ -46,8 +46,8 @@
                                     <h3 class="mb-0">{{ $stats['total_programs'] ?? 0 }}</h3>
                                 </div>
                                                             <div class="align-self-center">
-                                <img src="{{ asset('images/tracademics-logo.png') }}" alt="Programs" style="width: 48px; height: 48px; opacity: 0.75;">
-                            </div>
+                                                                <i class="fas fa-graduation-cap fa-2x opacity-75"></i>
+                                                            </div>
                             </div>
                         </div>
                     </div>
@@ -83,7 +83,7 @@
             <!-- Departments List -->
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0">University Departments</h5>
+                    <h5 class="mb-0">Departments</h5>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -134,7 +134,7 @@
                                                 <i class="fas fa-eye"></i>
                                             </a>
                                             <a href="{{ route('departments.programs', $department) }}" class="btn btn-sm btn-outline-info" title="Manage Programs">
-                                                <img src="{{ asset('images/tracademics-logo.png') }}" alt="Programs" style="width: 14px; height: 14px;">
+                                                <i class="fas fa-graduation-cap"></i>
                                             </a>
                                             @if(in_array(Auth::user()->role->name, ['MIS', 'VPAA']))
                                             <a href="{{ route('departments.edit', $department) }}" class="btn btn-sm btn-outline-secondary" title="Edit">

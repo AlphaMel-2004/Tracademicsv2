@@ -114,7 +114,8 @@ class UserSeeder extends Seeder
                 'role_id' => $programHeadRole->id,
                 'current_semester_id' => $activeSemester->id,
                 'faculty_type' => 'regular',
-                'department_id' => $program->department_id
+                'department_id' => $program->department_id,
+                'program_id' => $program->id
             ]);
         }
     }

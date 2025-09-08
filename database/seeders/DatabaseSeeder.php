@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             SemesterSeeder::class,
             DocumentTypeSeeder::class,
             UserSeeder::class,
+            FacultyAssignmentSeeder::class,
         ]);
     }
 }
