@@ -32,15 +32,30 @@
         }
         
         .auth-left {
-            background: #28a745;
+            background: url('/images/login_bg-image.jpg') center center/cover no-repeat;
             flex: 1;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            align-items: flex-start;
+            align-items: center;
             padding: 3rem;
-            color: white;
+            color: #fff;
             position: relative;
+            min-height: 100vh;
+            z-index: 1;
+        }
+        
+        .auth-left::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(34, 49, 63, 0.55); /* dark overlay for contrast */
+            z-index: 2;
+        }
+        
+        .auth-left > * {
+            position: relative;
+            z-index: 3;
         }
         
         .auth-right {
@@ -55,24 +70,31 @@
         
         .brand-logo {
             display: flex;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
             margin-bottom: 2rem;
-            font-size: 1.8rem;
+            font-size: 2.1rem;
             font-weight: bold;
+            text-align: center;
+            color: #fff;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.25), 0 1px 0 #222;
         }
         
         .brand-logo img {
-            background: #fcfafa;
-            color: white;
-            width: 80px;
-            height: 80px;
+            background: rgba(255,255,255,0.85);
+            color: #222;
+            width: 90px;
+            height: 90px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
-            margin-right: 12px;
-            padding: 4px;
+            border-radius: 16px;
+            margin-bottom: 12px;
+            margin-right: 0;
+            padding: 8px;
             box-sizing: border-box;
+            box-shadow: 0 2px 12px 0 rgba(0,0,0,0.10);
         }
         
         .brand-title {
@@ -96,6 +118,11 @@
         .form-container {
             width: 100%;
             max-width: 400px;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 6px 32px 0 rgba(40,167,69,0.10), 0 1.5px 6px 0 rgba(127,255,212,0.10);
+            padding: 2.5rem 2rem 2rem 2rem;
+            margin-top: 2rem;
         }
         
         .form-header {
@@ -116,9 +143,10 @@
         }
         
         .user-avatar {
-            width: 60px;
-            height: 60px;
-            background: #4285f4;
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #7fffd4 0%, #28a745 100%);
+            box-shadow: 0 2px 8px 0 rgba(40,167,69,0.10);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -127,8 +155,8 @@
         }
         
         .user-avatar i {
-            color: white;
-            font-size: 1.5rem;
+            color: #fff;
+            font-size: 1.7rem;
         }
         
         .form-group {
@@ -180,22 +208,25 @@
         }
         
         .btn-login {
-            background: #28a745;
-            color: white;
+            background: linear-gradient(90deg, #7fffd4 0%, #28a745 100%);
+            color: #fff;
             border: none;
-            border-radius: 8px;
-            padding: 12px 24px;
-            font-size: 1rem;
-            font-weight: 500;
+            border-radius: 24px;
+            padding: 14px 0;
+            font-size: 1.1rem;
+            font-weight: 600;
             width: 100%;
+            box-shadow: 0 2px 8px 0 rgba(40,167,69,0.10);
             transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
         
         .btn-login:hover {
-            background: #218838;
-            transform: translateY(-1px);
+            background: linear-gradient(90deg, #28a745 0%, #7fffd4 100%);
+            color: #fff;
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 4px 16px 0 rgba(40,167,69,0.15);
         }
         
         .forgot-link {
