@@ -5,13 +5,18 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Models\ComplianceSubmission;
 use App\Models\DocumentType;
 use App\Models\User;
 use App\Models\Department;
 use App\Models\Program;
 use App\Models\Semester;
+use App\Models\FacultySemesterCompliance;
+use App\Models\SubjectCompliance;
+use App\Models\FacultyAssignment;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReportController extends Controller
 {
@@ -312,32 +317,50 @@ class ReportController extends Controller
             abort(404, 'No department assigned to this dean');
         }
         
-        // Get programs under this dean's department
-        $programs = $department->programs()->with(['users'])->get();
+        // Get programs under this dean's department with detailed compliance data
+        $programs = $department->programs()->get();
         
         $programStats = $programs->map(function ($program) {
-            $facultyIds = $program->users()->whereHas('role', function($query) {
-                $query->where('name', 'Faculty');
-            })->pluck('id');
+            // Get faculty members assigned to this program through faculty assignments
+            $facultyIds = $program->facultyAssignments()
+                ->whereHas('user.role', function($query) {
+                    $query->where('name', 'Faculty');
+                })
+                ->pluck('user_id')
+                ->unique();
+                
+            $faculty = User::whereIn('id', $facultyIds)
+                ->with([
+                    'facultySemesterCompliances.documentType',
+                    'subjectCompliances.documentType',
+                    'facultyAssignments.subject'
+                ])
+                ->get();
+
+            // Calculate detailed compliance statistics
+            $totalCompliances = 0;
+            $compliedCount = 0;
             
-            $totalSubmissions = ComplianceSubmission::whereIn('user_id', $facultyIds)->count();
-            $approvedSubmissions = ComplianceSubmission::whereIn('user_id', $facultyIds)
-                ->where('status', 'approved')->count();
-            $pendingSubmissions = ComplianceSubmission::whereIn('user_id', $facultyIds)
-                ->where('status', 'pending')->count();
-            $rejectedSubmissions = ComplianceSubmission::whereIn('user_id', $facultyIds)
-                ->where('status', 'rejected')->count();
+            $faculty->each(function($facultyMember) use (&$totalCompliances, &$compliedCount) {
+                // Count semester-wide compliances
+                $semesterCompliances = $facultyMember->facultySemesterCompliances;
+                $totalCompliances += $semesterCompliances->count();
+                $compliedCount += $semesterCompliances->where('self_evaluation_status', 'Complied')->count();
+                
+                // Count subject-specific compliances
+                $subjectCompliances = $facultyMember->subjectCompliances;
+                $totalCompliances += $subjectCompliances->count();
+                $compliedCount += $subjectCompliances->where('self_evaluation_status', 'Complied')->count();
+            });
             
-            $complianceRate = $totalSubmissions > 0 ? 
-                round(($approvedSubmissions / $totalSubmissions) * 100, 1) : 0;
+            $complianceRate = $totalCompliances > 0 ? 
+                round(($compliedCount / $totalCompliances) * 100, 1) : 0;
             
             return [
                 'program' => $program,
                 'total_faculty' => $facultyIds->count(),
-                'total_submissions' => $totalSubmissions,
-                'approved_submissions' => $approvedSubmissions,
-                'pending_submissions' => $pendingSubmissions,
-                'rejected_submissions' => $rejectedSubmissions,
+                'total_compliances' => $totalCompliances,
+                'complied_count' => $compliedCount,
                 'compliance_rate' => $complianceRate
             ];
         });
@@ -348,16 +371,12 @@ class ReportController extends Controller
             'total_faculty' => $department->users()->whereHas('role', function($query) {
                 $query->where('name', 'Faculty');
             })->count(),
-            'total_submissions' => ComplianceSubmission::whereHas('user', function($query) use ($department) {
-                $query->where('department_id', $department->id);
-            })->count(),
-            'approved_submissions' => ComplianceSubmission::whereHas('user', function($query) use ($department) {
-                $query->where('department_id', $department->id);
-            })->where('status', 'approved')->count(),
+            'total_compliances' => $programStats->sum('total_compliances'),
+            'complied_count' => $programStats->sum('complied_count'),
         ];
         
-        $departmentStats['compliance_rate'] = $departmentStats['total_submissions'] > 0 ? 
-            round(($departmentStats['approved_submissions'] / $departmentStats['total_submissions']) * 100, 1) : 0;
+        $departmentStats['compliance_rate'] = $departmentStats['total_compliances'] > 0 ? 
+            round(($departmentStats['complied_count'] / $departmentStats['total_compliances']) * 100, 1) : 0;
         
         return view('reports.dean', compact('department', 'programStats', 'departmentStats'));
     }
@@ -378,30 +397,125 @@ class ReportController extends Controller
             abort(404, 'No department assigned to this dean');
         }
         
-        // Get detailed compliance data
-        $programs = $department->programs()->with(['users.complianceSubmissions'])->get();
+        // Get current semester for compliance data
+        $currentSemester = Semester::where('is_active', true)->first();
+        
+        // Get document types for each submission type
+        $semesterDocTypes = DocumentType::where('submission_type', 'semester')->get();
+        $subjectDocTypes = DocumentType::where('submission_type', 'subject')->get();
+        
+        // Get detailed compliance data for each program
+        $programs = $department->programs()->get();
         
         $reportData = [
             'department' => $department,
             'generated_at' => now(),
             'generated_by' => $user->name,
-            'programs' => $programs->map(function ($program) {
-                $faculty = $program->users()->whereHas('role', function($query) {
-                    $query->where('name', 'Faculty');
-                })->with('complianceSubmissions')->get();
-                
-                $facultyData = $faculty->map(function ($facultyMember) {
-                    $submissions = $facultyMember->complianceSubmissions;
-                    $totalSubmissions = $submissions->count();
-                    $approvedSubmissions = $submissions->where('status', 'approved')->count();
+            'current_semester' => $currentSemester,
+            'programs' => $programs->map(function ($program) use ($currentSemester, $semesterDocTypes, $subjectDocTypes) {
+                // Get faculty members assigned to this program through faculty assignments
+                $facultyIds = $program->facultyAssignments()
+                    ->whereHas('user.role', function($query) {
+                        $query->where('name', 'Faculty');
+                    })
+                    ->pluck('user_id')
+                    ->unique();
+                    
+                $faculty = User::whereIn('id', $facultyIds)
+                    ->with([
+                        'facultySemesterCompliances.documentType',
+                        'subjectCompliances.documentType',
+                        'subjectCompliances.subject',
+                        'facultyAssignments.subject',
+                        'facultyAssignments.semester'
+                    ])
+                    ->get();
+
+                $facultyData = $faculty->map(function ($facultyMember) use ($currentSemester, $semesterDocTypes, $subjectDocTypes) {
+                    // Get semester-wide compliance data
+                    $semesterCompliances = collect();
+                    if ($currentSemester) {
+                        foreach ($semesterDocTypes as $docType) {
+                            $compliance = $facultyMember->facultySemesterCompliances()
+                                ->where('semester_id', $currentSemester->id)
+                                ->where('document_type_id', $docType->id)
+                                ->with('documentType')
+                                ->first();
+                            
+                            if (!$compliance) {
+                                // Create placeholder for missing compliance
+                                $compliance = new FacultySemesterCompliance([
+                                    'user_id' => $facultyMember->id,
+                                    'document_type_id' => $docType->id,
+                                    'semester_id' => $currentSemester->id,
+                                    'evidence_link' => '',
+                                    'self_evaluation_status' => 'Not Complied',
+                                ]);
+                                $compliance->documentType = $docType;
+                            }
+                            
+                            $semesterCompliances->push($compliance);
+                        }
+                    }
+                    
+                    // Get assigned subjects with subject-specific compliance
+                    $assignedSubjects = $facultyMember->facultyAssignments()
+                        ->with(['subject'])
+                        ->get()
+                        ->map(function ($assignment) use ($facultyMember, $subjectDocTypes) {
+                            $subject = $assignment->subject;
+                            
+                            // Get subject-specific compliance for each document type
+                            $subjectCompliances = collect();
+                            foreach ($subjectDocTypes as $docType) {
+                                $compliance = $facultyMember->subjectCompliances()
+                                    ->where('subject_id', $subject->id)
+                                    ->where('document_type_id', $docType->id)
+                                    ->with('documentType')
+                                    ->first();
+                                
+                                if (!$compliance) {
+                                    // Create placeholder for missing compliance
+                                    $compliance = new SubjectCompliance([
+                                        'user_id' => $facultyMember->id,
+                                        'subject_id' => $subject->id,
+                                        'document_type_id' => $docType->id,
+                                        'evidence_link' => '',
+                                        'self_evaluation_status' => 'Not Complied',
+                                    ]);
+                                    $compliance->documentType = $docType;
+                                }
+                                
+                                $subjectCompliances->push($compliance);
+                            }
+                            
+                            return [
+                                'assignment' => $assignment,
+                                'subject' => $subject,
+                                'compliances' => $subjectCompliances
+                            ];
+                        });
+                    
+                    // Calculate compliance rate
+                    $allCompliances = $semesterCompliances->merge(
+                        $assignedSubjects->flatMap(function($subjectData) {
+                            return $subjectData['compliances'];
+                        })
+                    );
+                    
+                    $totalCompliances = $allCompliances->count();
+                    $compliedCount = $allCompliances->where('self_evaluation_status', 'Complied')->count();
+                    $complianceRate = $totalCompliances > 0 ? 
+                        round(($compliedCount / $totalCompliances) * 100, 1) : 0;
                     
                     return [
                         'name' => $facultyMember->name,
                         'email' => $facultyMember->email,
-                        'total_submissions' => $totalSubmissions,
-                        'approved_submissions' => $approvedSubmissions,
-                        'compliance_rate' => $totalSubmissions > 0 ? 
-                            round(($approvedSubmissions / $totalSubmissions) * 100, 1) : 0
+                        'semester_compliances' => $semesterCompliances,
+                        'assigned_subjects' => $assignedSubjects,
+                        'total_compliances' => $totalCompliances,
+                        'complied_count' => $compliedCount,
+                        'compliance_rate' => $complianceRate
                     ];
                 });
                 
@@ -415,10 +529,10 @@ class ReportController extends Controller
         ];
         
         // Generate PDF using a view
-        $pdf = app('dompdf.wrapper');
+        $pdf = Pdf::setPaper('A4', 'portrait');
         $pdf->loadView('reports.dean-pdf', $reportData);
         
-        $filename = 'dean-report-' . $department->name . '-' . now()->format('Y-m-d') . '.pdf';
+        $filename = 'dean-compliance-report-' . $department->name . '-' . now()->format('Y-m-d') . '.pdf';
         
         return $pdf->download($filename);
     }

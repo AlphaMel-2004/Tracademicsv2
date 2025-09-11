@@ -29,11 +29,11 @@
                     <div class="row align-items-center">
                         <div class="col-md-8">
                             <h4 class="mb-1">{{ $department->name }} Overview</h4>
-                            <p class="mb-0">{{ $department->description ?? 'Department compliance report overview' }}</p>
+                            <p class="mb-0">Faculty compliance monitoring based on semester-wide and subject-specific requirements</p>
                         </div>
                         <div class="col-md-4 text-end">
                             <h3>{{ $departmentStats['compliance_rate'] }}% Compliance</h3>
-                            <small>{{ $departmentStats['approved_submissions'] }}/{{ $departmentStats['total_submissions'] }} Approved</small>
+                            <small>{{ $departmentStats['complied_count'] }}/{{ $departmentStats['total_compliances'] }} Requirements Complied</small>
                         </div>
                     </div>
                 </div>
@@ -62,16 +62,16 @@
         <div class="col-md-3">
             <div class="card bg-warning text-white">
                 <div class="card-body text-center">
-                    <h4>{{ $departmentStats['total_submissions'] }}</h4>
-                    <small>Total Submissions</small>
+                    <h4>{{ $departmentStats['total_compliances'] }}</h4>
+                    <small>Total Requirements</small>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card bg-secondary text-white">
                 <div class="card-body text-center">
-                    <h4>{{ $departmentStats['approved_submissions'] }}</h4>
-                    <small>Approved Submissions</small>
+                    <h4>{{ $departmentStats['complied_count'] }}</h4>
+                    <small>Complied Requirements</small>
                 </div>
             </div>
         </div>
@@ -81,6 +81,7 @@
     <div class="card">
         <div class="card-header">
             <h5 class="mb-0">Program Compliance Report</h5>
+            <small class="text-muted">Detailed compliance monitoring based on semester-wide and subject-specific requirements</small>
         </div>
         <div class="card-body">
             @if($programStats->count() > 0)
@@ -90,12 +91,12 @@
                         <tr>
                             <th>Program</th>
                             <th>Faculty Count</th>
-                            <th>Total Submissions</th>
-                            <th>Approved</th>
-                            <th>Pending</th>
-                            <th>Rejected</th>
+                            <th>Total Requirements</th>
+                            <th>Complied</th>
+                            <th>Not Complied</th>
                             <th>Compliance Rate</th>
                             <th>Status</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -106,7 +107,7 @@
                                     <strong>{{ $programData['program']->name }}</strong>
                                     @if($programData['program']->description)
                                     <br>
-                                    <small class="text-muted">{{ $programData['program']->description }}</small>
+                                    <small class="text-muted">{{ Str::limit($programData['program']->description, 50) }}</small>
                                     @endif
                                 </div>
                             </td>
@@ -114,16 +115,13 @@
                                 <span class="badge bg-info">{{ $programData['total_faculty'] }}</span>
                             </td>
                             <td>
-                                <span class="badge bg-secondary">{{ $programData['total_submissions'] }}</span>
+                                <span class="badge bg-secondary">{{ $programData['total_compliances'] }}</span>
                             </td>
                             <td>
-                                <span class="badge bg-success">{{ $programData['approved_submissions'] }}</span>
+                                <span class="badge bg-success">{{ $programData['complied_count'] }}</span>
                             </td>
                             <td>
-                                <span class="badge bg-warning">{{ $programData['pending_submissions'] }}</span>
-                            </td>
-                            <td>
-                                <span class="badge bg-danger">{{ $programData['rejected_submissions'] }}</span>
+                                <span class="badge bg-danger">{{ $programData['total_compliances'] - $programData['complied_count'] }}</span>
                             </td>
                             <td>
                                 <div class="d-flex align-items-center">
@@ -147,6 +145,12 @@
                                 @else
                                     <span class="badge bg-danger">Critical</span>
                                 @endif
+                            </td>
+                            <td>
+                                <a href="{{ route('monitor.dean.program.faculty', $programData['program']->id) }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye me-1"></i>View Details
+                                </a>
                             </td>
                         </tr>
                         @endforeach
