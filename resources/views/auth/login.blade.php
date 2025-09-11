@@ -9,7 +9,7 @@
     </div>
     <div class="brand-title">Academic Compliance Monitoring System</div>
     <div class="brand-description">
-        Streamlining and organizing faculty requirements and document submissions.
+        Facilitating the efficient management of faculty requirements and timely submission of academic documentation.
     </div>
 </div>
 
