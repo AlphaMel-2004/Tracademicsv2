@@ -14,7 +14,6 @@ class SubjectComplianceController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'actual_situation' => 'nullable|string|max:1000',
             'evidence_link' => 'nullable|url|max:500',
             'self_evaluation_status' => 'nullable|in:Complied,Not Complied',
         ]);
@@ -28,10 +27,6 @@ class SubjectComplianceController extends Controller
 
         // Prepare update data
         $updateData = [];
-        
-        if ($request->has('actual_situation')) {
-            $updateData['actual_situation'] = $request->actual_situation ?? '';
-        }
         
         if ($request->has('evidence_link')) {
             $updateData['evidence_link'] = $request->evidence_link ?? '';

@@ -97,7 +97,6 @@ class AssignedSubjectsController extends Controller
                         'user_id' => $user->id,
                         'document_type_id' => $docType->id,
                         'semester_id' => $currentSemester->id,
-                        'actual_situation' => '',
                         'evidence_link' => '',
                         'self_evaluation_status' => 'Not Complied',
                     ]);
@@ -153,7 +152,6 @@ class AssignedSubjectsController extends Controller
                     'user_id' => $user->id,
                     'subject_id' => $subject->id,
                     'document_type_id' => $docType->id,
-                    'actual_situation' => '',
                     'evidence_link' => '',
                     'self_evaluation_status' => 'Not Complied',
                 ]);

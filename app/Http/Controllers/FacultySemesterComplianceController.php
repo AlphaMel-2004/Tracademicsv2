@@ -22,7 +22,6 @@ class FacultySemesterComplianceController extends Controller
         ]);
 
         $request->validate([
-            'actual_situation' => 'nullable|string|max:1000',
             'evidence_link' => 'nullable|string|max:500',
             'self_evaluation_status' => 'nullable|in:Complied,Not Complied',
         ]);
@@ -36,10 +35,6 @@ class FacultySemesterComplianceController extends Controller
 
         // Prepare update data
         $updateData = [];
-        
-        if ($request->has('actual_situation')) {
-            $updateData['actual_situation'] = $request->actual_situation ?? '';
-        }
         
         // Handle status updates
         if ($request->has('self_evaluation_status')) {

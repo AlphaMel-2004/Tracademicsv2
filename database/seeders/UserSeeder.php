@@ -29,6 +29,7 @@ class UserSeeder extends Seeder
         $asbme = Department::where('code', 'ASBME')->first();
         $nursing = Department::where('code', 'NURSING')->first();
         $alliedHealth = Department::where('code', 'ALLIED_HEALTH')->first();
+        $graduateStudies = Department::where('code', 'GRADUATE_STUDIES')->first();
 
         // Get active semester
         $activeSemester = Semester::where('is_active', true)->first();
@@ -86,6 +87,16 @@ class UserSeeder extends Seeder
                 'current_semester_id' => $activeSemester->id,
                 'faculty_type' => 'regular',
                 'department_id' => $alliedHealth->id
+            ],
+            // Dean for Graduate Studies
+            [
+                'name' => 'Dr. Patricia Villanueva',
+                'email' => 'dean.graduatestudies@brokenshire.edu.ph',
+                'password' => Hash::make('password'),
+                'role_id' => $deanRole->id,
+                'current_semester_id' => $activeSemester->id,
+                'faculty_type' => 'regular',
+                'department_id' => $graduateStudies->id
             ]
         ];
 

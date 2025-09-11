@@ -28,6 +28,11 @@ class DepartmentSeeder extends Seeder
                 'name' => 'Allied Health',
                 'code' => 'ALLIED_HEALTH',
                 'description' => 'Department of Allied Health'
+            ],
+            [
+                'name' => 'Graduate Studies',
+                'code' => 'GRADUATE_STUDIES',
+                'description' => 'Department of Graduate Studies'
             ]
         ];
 

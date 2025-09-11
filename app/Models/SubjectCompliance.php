@@ -14,7 +14,6 @@ class SubjectCompliance extends Model
         'user_id',
         'subject_id',
         'document_type_id',
-        'actual_situation',
         'evidence_link',
         'self_evaluation_status',
         'approval_status',

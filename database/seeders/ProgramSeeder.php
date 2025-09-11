@@ -18,6 +18,7 @@ class ProgramSeeder extends Seeder
         $asbme = Department::where('code', 'ASBME')->first();
         $nursing = Department::where('code', 'NURSING')->first();
         $alliedHealth = Department::where('code', 'ALLIED_HEALTH')->first();
+        $graduateStudies = Department::where('code', 'GRADUATE_STUDIES')->first();
 
         $programs = [
             // ASBME Programs
@@ -82,6 +83,19 @@ class ProgramSeeder extends Seeder
                 'code' => 'BSMLS',
                 'department_id' => $alliedHealth->id,
                 'description' => 'Medical Laboratory Science Program'
+            ],
+            // Graduate Studies Programs
+            [
+                'name' => 'Master of Arts in Nursing',
+                'code' => 'MAN',
+                'department_id' => $graduateStudies->id,
+                'description' => 'Master of Arts in Nursing Program'
+            ],
+            [
+                'name' => 'Master of Arts in Theology',
+                'code' => 'MATheo',
+                'department_id' => $graduateStudies->id,
+                'description' => 'Master of Arts in Theology Program'
             ]
         ];
 

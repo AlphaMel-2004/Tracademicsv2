@@ -14,7 +14,6 @@ class FacultySemesterCompliance extends Model
         'user_id',
         'document_type_id',
         'semester_id',
-        'actual_situation',
         'evidence_link',
         'self_evaluation_status',
         'approval_status',

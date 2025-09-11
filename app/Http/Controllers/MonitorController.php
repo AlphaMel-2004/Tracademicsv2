@@ -314,7 +314,6 @@ class MonitorController extends Controller
                             'user_id' => $facultyMember->id,
                             'document_type_id' => $docType->id,
                             'semester_id' => $currentSemester->id,
-                            'actual_situation' => '',
                             'evidence_link' => '',
                             'self_evaluation_status' => 'Not Complied',
                         ]);
@@ -347,7 +346,6 @@ class MonitorController extends Controller
                                 'user_id' => $facultyMember->id,
                                 'subject_id' => $subject->id,
                                 'document_type_id' => $docType->id,
-                                'actual_situation' => '',
                                 'evidence_link' => '',
                                 'self_evaluation_status' => 'Not Complied',
                             ]);

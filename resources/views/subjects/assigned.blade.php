@@ -13,17 +13,6 @@
         padding: 12px 8px;
     }
     
-    .semester-requirements-table .actual-situation {
-        font-size: 0.85rem;
-        border: 1px solid #e0e0e0;
-        border-radius: 4px;
-    }
-    
-    .semester-requirements-table .actual-situation:focus {
-        border-color: #007bff;
-        box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
-    }
-    
     @media (max-width: 768px) {
         .semester-requirements-table {
             font-size: 0.8rem;
@@ -61,10 +50,9 @@
                             <table class="table table-striped table-hover mb-0 semester-requirements-table" id="semester-requirements-table">
                                 <thead class="table-light">
                                     <tr>
-                                        <th style="width: 20%;">Document Type</th>
-                                        <th style="width: 25%;">Description</th>
-                                        <th style="width: 20%;">Actual Situation</th>
-                                        <th style="width: 15%;">Evidence</th>
+                                        <th style="width: 25%;">Document Type</th>
+                                        <th style="width: 35%;">Description</th>
+                                        <th style="width: 20%;">Evidence</th>
                                         <th style="width: 15%;">Self-Evaluation Status</th>
                                         <th style="width: 5%;">Actions</th>
                                     </tr>
@@ -77,14 +65,6 @@
                                         </td>
                                         <td>
                                             <small class="text-muted">{{ $compliance->documentType->description }}</small>
-                                        </td>
-                                        <td>
-                                            <textarea 
-                                                class="form-control form-control-sm actual-situation" 
-                                                rows="2" 
-                                                placeholder="Describe your document status..."
-                                                data-field="actual_situation"
-                                                style="resize: vertical; min-height: 50px;">{{ $compliance->actual_situation }}</textarea>
                                         </td>
                                         <td>
                                             @if($compliance->evidence_link)
@@ -430,7 +410,7 @@ function updateCompliance(complianceId, field, value, successCallback = null) {
 
 function updateEvidenceDisplay(complianceId, link) {
     const row = document.querySelector(`tr[data-compliance-id="${complianceId}"]`);
-    const evidenceCell = row.children[3]; // Evidence column
+    const evidenceCell = row.children[2]; // Evidence column (now index 2 after removing actual_situation)
     
     if (link) {
         evidenceCell.innerHTML = `
