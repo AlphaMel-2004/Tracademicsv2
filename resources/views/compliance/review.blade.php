@@ -21,7 +21,7 @@
                                 <option value="">All Statuses</option>
                                 <option value="submitted" {{ request('status') === 'submitted' ? 'selected' : '' }}>Submitted</option>
                                 <option value="approved" {{ request('status') === 'approved' ? 'selected' : '' }}>Approved</option>
-                                <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                                <option value="needs_revision" {{ request('status') === 'needs_revision' ? 'selected' : '' }}>Needs Revision</option>
                             </select>
                         </div>
                         <div class="col-md-3">
@@ -93,7 +93,7 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                <span class="badge bg-{{ $submission->status === 'approved' ? 'success' : ($submission->status === 'rejected' ? 'danger' : 'warning') }}">
+                                                <span class="badge bg-{{ $submission->status === 'approved' ? 'success' : ($submission->status === 'needs_revision' ? 'warning' : 'secondary') }}">
                                                     {{ ucfirst($submission->status) }}
                                                 </span>
                                             </td>
@@ -127,9 +127,9 @@
                                                                 onclick="quickReview({{ $submission->id }}, 'approve')">
                                                             <i class="fas fa-check"></i>
                                                         </button>
-                                                        <button type="button" class="btn btn-outline-danger" 
+                                                        <button type="button" class="btn btn-outline-warning" 
                                                                 onclick="quickReview({{ $submission->id }}, 'reject')">
-                                                            <i class="fas fa-times"></i>
+                                                            <i class="fas fa-edit"></i>
                                                         </button>
                                                     @endif
                                                 </div>
@@ -234,8 +234,8 @@
                                                                         <i class="fas fa-check me-1"></i>Approve
                                                                     </button>
                                                                     <button type="submit" name="action" value="reject" 
-                                                                            class="btn btn-danger">
-                                                                        <i class="fas fa-times me-1"></i>Reject
+                                                                            class="btn btn-warning">
+                                                                        <i class="fas fa-edit me-1"></i>Needs Revision
                                                                     </button>
                                                                 </div>
                                                             </form>
@@ -300,7 +300,7 @@
 function quickReview(submissionId, action) {
     const message = action === 'approve' 
         ? 'Are you sure you want to approve this submission?' 
-        : 'Are you sure you want to reject this submission?';
+        : 'Are you sure you want to mark this submission for revision?';
     
     if (confirm(message)) {
         const form = document.createElement('form');

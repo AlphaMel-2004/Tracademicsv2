@@ -178,7 +178,7 @@
                                     <h6 class="mb-1">{{ $submission->documentType->name ?? 'Unknown Document' }}</h6>
                                     <p class="mb-1 text-muted small">{{ $submission->created_at->diffForHumans() }}</p>
                                 </div>
-                                <span class="badge bg-{{ $submission->status == 'approved' ? 'success' : ($submission->status == 'pending' ? 'warning' : ($submission->status == 'rejected' ? 'danger' : 'info')) }}">
+                                <span class="badge bg-{{ $submission->status == 'approved' ? 'success' : ($submission->status == 'pending' ? 'warning' : ($submission->status == 'needs_revision' ? 'warning' : 'info')) }}">
                                     {{ ucfirst($submission->status) }}
                                 </span>
                             </div>

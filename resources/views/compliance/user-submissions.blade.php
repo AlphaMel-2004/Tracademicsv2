@@ -59,8 +59,8 @@
                                             <span class="stat-label">Pending</span>
                                         </div>
                                         <div class="stat-item">
-                                            <span class="stat-value text-danger">{{ $submissions->where('status', 'rejected')->count() }}</span>
-                                            <span class="stat-label">Rejected</span>
+                                            <span class="stat-value text-warning">{{ $submissions->where('status', 'needs_revision')->count() }}</span>
+                                            <span class="stat-label">Needs Revision</span>
                                         </div>
                                     </div>
                                 </div>
@@ -114,7 +114,7 @@
                                             @elseif($submission->status === 'pending')
                                                 <span class="badge bg-warning">Pending</span>
                                             @else
-                                                <span class="badge bg-danger">Rejected</span>
+                                                <span class="badge bg-warning">Needs Revision</span>
                                             @endif
                                             @if($submission->reviewed_at)
                                                 <br>

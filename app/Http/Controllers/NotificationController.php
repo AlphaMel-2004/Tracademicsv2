@@ -53,18 +53,18 @@ class NotificationController extends Controller
             }
         }
 
-        // Check for rejected submissions
-        $rejectedSubmissions = ComplianceSubmission::where('user_id', $user->id)
-            ->where('status', 'rejected')
+        // Check for submissions that need revision
+        $needsRevisionSubmissions = ComplianceSubmission::where('user_id', $user->id)
+            ->where('status', 'needs_revision')
             ->where('reviewed_at', '>=', now()->subDays(7))
             ->with('documentType')
             ->get();
 
-        foreach ($rejectedSubmissions as $submission) {
+        foreach ($needsRevisionSubmissions as $submission) {
             $notifications[] = [
                 'type' => 'danger',
-                'title' => 'Submission Rejected',
-                'message' => "Your '{$submission->documentType->name}' submission was rejected",
+                'title' => 'Submission Needs Revision',
+                'message' => "Your '{$submission->documentType->name}' submission needs revision",
                 'action' => route('compliance.my-submissions'),
                 'action_text' => 'View & Resubmit',
                 'reviewed_at' => $submission->reviewed_at

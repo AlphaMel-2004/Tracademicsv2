@@ -27,8 +27,8 @@ class UserManagementController extends Controller
         
         $users = User::with(['role', 'department'])->paginate(15);
         
-        // Get roles and departments for the modal
-        $roles = Role::all();
+        // Get roles and departments for the modal - exclude Faculty role as MIS cannot create faculty users
+        $roles = Role::where('name', '!=', 'Faculty')->get();
         $departments = Department::with('programs')->get();
         
         // Calculate statistics
@@ -62,6 +62,14 @@ class UserManagementController extends Controller
         
         if ($user->role->name !== 'MIS') {
             abort(403, 'Unauthorized access');
+        }
+        
+        // Check if trying to create Faculty user - MIS cannot create Faculty users
+        $selectedRole = Role::find($request->role_id);
+        if ($selectedRole && $selectedRole->name === 'Faculty') {
+            return back()->withErrors([
+                'role_id' => 'MIS cannot create Faculty users. Faculty users must be registered by Program Heads.'
+            ])->withInput();
         }
         
         $request->validate([
@@ -136,7 +144,8 @@ class UserManagementController extends Controller
             abort(403, 'Unauthorized access');
         }
         
-        $roles = Role::all();
+        // MIS cannot edit users with Faculty role or assign Faculty role
+        $roles = Role::where('name', '!=', 'Faculty')->get();
         $departments = Department::all();
         
         return view('user-management.edit', compact('user', 'roles', 'departments'));
@@ -151,6 +160,12 @@ class UserManagementController extends Controller
         
         if ($authUser->role->name !== 'MIS') {
             abort(403, 'Unauthorized access');
+        }
+        
+        // Prevent MIS from assigning Faculty role
+        $selectedRole = Role::find($request->role_id);
+        if ($selectedRole && $selectedRole->name === 'Faculty') {
+            return redirect()->back()->withErrors(['role_id' => 'MIS cannot assign Faculty role to users.'])->withInput();
         }
         
         $request->validate([

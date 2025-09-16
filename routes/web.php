@@ -78,6 +78,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [FacultyManagementController::class, 'index'])->name('index');
         Route::get('/create', [FacultyManagementController::class, 'create'])->name('create');
         Route::post('/', [FacultyManagementController::class, 'store'])->name('store');
+        
+        // Program Head Faculty Management routes (must be before dynamic routes)
+        Route::get('/manage', [FacultyManagementController::class, 'manageFaculty'])->name('manage');
+        Route::post('/register', [FacultyManagementController::class, 'registerFaculty'])->name('register');
+        
         Route::get('/{faculty}', [FacultyManagementController::class, 'show'])->name('show');
         Route::get('/{faculty}/edit', [FacultyManagementController::class, 'edit'])->name('edit');
         Route::put('/{faculty}', [FacultyManagementController::class, 'update'])->name('update');
@@ -163,9 +168,9 @@ Route::middleware(['auth'])->group(function () {
         
         // Compliance Action Routes (for Program Heads)
         Route::post('/semester-compliance/{id}/approve', [ComplianceActionController::class, 'approveSemesterCompliance'])->name('semester.compliance.approve');
-        Route::post('/semester-compliance/{id}/reject', [ComplianceActionController::class, 'rejectSemesterCompliance'])->name('semester.compliance.reject');
+        Route::post('/semester-compliance/{id}/needs-revision', [ComplianceActionController::class, 'rejectSemesterCompliance'])->name('semester.compliance.needs_revision');
         Route::post('/subject-compliance/{id}/approve', [ComplianceActionController::class, 'approveSubjectCompliance'])->name('subject.compliance.approve');
-        Route::post('/subject-compliance/{id}/reject', [ComplianceActionController::class, 'rejectSubjectCompliance'])->name('subject.compliance.reject');
+        Route::post('/subject-compliance/{id}/needs-revision', [ComplianceActionController::class, 'rejectSubjectCompliance'])->name('subject.compliance.needs_revision');
     });
     
     // Faculty Assigned Subjects routes

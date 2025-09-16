@@ -84,20 +84,65 @@
                                         <span class="badge bg-danger">Not Complied</span>
                                     @endif
                                     
-                                    @if($compliance->approval_status)
+                                    @if($compliance->program_head_approval_status || $compliance->dean_approval_status || $compliance->approval_status)
                                         <br>
+                                        <!-- Program Head Approval Status -->
+                                        @if($compliance->program_head_approval_status)
+                                            <small class="d-block mt-1">
+                                                @if($compliance->program_head_approval_status === 'approved')
+                                                    <span class="text-success">
+                                                        <i class="fas fa-check-circle"></i> PH: Approved
+                                                    </span>
+                                                @elseif($compliance->program_head_approval_status === 'needs_revision')
+                                                    <span class="text-warning">
+                                                        <i class="fas fa-edit"></i> PH: Needs Revision
+                                                    </span>
+                                                @else
+                                                    <span class="text-muted">
+                                                        <i class="fas fa-clock"></i> PH: Pending
+                                                    </span>
+                                                @endif
+                                            </small>
+                                        @endif
+                                        
+                                        <!-- Dean Approval Status -->
+                                        @if($compliance->dean_approval_status)
+                                            <small class="d-block">
+                                                @if($compliance->dean_approval_status === 'approved')
+                                                    <span class="text-success">
+                                                        <i class="fas fa-check-double"></i> Dean: Approved
+                                                    </span>
+                                                @elseif($compliance->dean_approval_status === 'needs_revision')
+                                                    <span class="text-warning">
+                                                        <i class="fas fa-edit"></i> Dean: Needs Revision
+                                                    </span>
+                                                @else
+                                                    <span class="text-muted">
+                                                        <i class="fas fa-clock"></i> Dean: Pending
+                                                    </span>
+                                                @endif
+                                            </small>
+                                        @endif
+                                        
+                                        <!-- Overall Status -->
                                         @if($compliance->approval_status === 'approved')
-                                            <small class="text-success">
-                                                <i class="fas fa-check-circle"></i> Approved
-                                            </small>
-                                        @elseif($compliance->approval_status === 'rejected')
-                                            <small class="text-danger">
-                                                <i class="fas fa-times-circle"></i> Rejected
-                                            </small>
+                                            <span class="badge bg-success mt-1">
+                                                <i class="fas fa-trophy"></i> FULLY APPROVED
+                                            </span>
+                                        @elseif($compliance->approval_status === 'needs_revision')
+                                            <span class="badge bg-warning mt-1">
+                                                <i class="fas fa-edit"></i> NEEDS REVISION
+                                            </span>
                                         @else
-                                            <small class="text-warning">
-                                                <i class="fas fa-clock"></i> Pending Review
-                                            </small>
+                                            @if($compliance->program_head_approval_status === 'approved' && !$compliance->dean_approval_status)
+                                                <span class="badge bg-info mt-1">
+                                                    <i class="fas fa-arrow-up"></i> AWAITING DEAN
+                                                </span>
+                                            @else
+                                                <span class="badge bg-secondary mt-1">
+                                                    <i class="fas fa-clock"></i> PENDING REVIEW
+                                                </span>
+                                            @endif
                                         @endif
                                     @endif
                                 </td>
@@ -112,20 +157,50 @@
                                 </td>
                                 <td>
                                     @if($compliance->evidence_link && $compliance->id)
-                                        @if($compliance->approval_status !== 'approved')
-                                            <button class="btn btn-sm btn-success me-1 approve-btn" 
-                                                    data-compliance-id="{{ $compliance->id }}" 
-                                                    data-type="semester">
-                                                <i class="fas fa-check"></i> Approve
-                                            </button>
-                                        @endif
-                                        @if($compliance->approval_status !== 'rejected')
-                                            <button class="btn btn-sm btn-danger reject-btn" 
-                                                    data-compliance-id="{{ $compliance->id }}" 
-                                                    data-type="semester">
-                                                <i class="fas fa-times"></i> Reject
-                                            </button>
-                                        @endif
+                                        @auth
+                                            @if(Auth::user()->role->name !== 'VPAA')
+                                                <!-- Program Head Actions -->
+                                                @if(Auth::user()->role->name === 'Program Head')
+                                                    @if($compliance->program_head_approval_status !== 'approved')
+                                                        <button class="btn btn-sm btn-success me-1 approve-btn" 
+                                                                data-compliance-id="{{ $compliance->id }}" 
+                                                                data-type="semester">
+                                                            <i class="fas fa-check"></i> PH Approve
+                                                        </button>
+                                                    @endif
+                                                    @if($compliance->program_head_approval_status !== 'needs_revision')
+                                                        <button class="btn btn-sm btn-warning needs-revision-btn" 
+                                                                data-compliance-id="{{ $compliance->id }}" 
+                                                                data-type="semester">
+                                                            <i class="fas fa-edit"></i> PH Revision
+                                                        </button>
+                                                    @endif
+                                                @endif
+                                                
+                                                <!-- Dean Actions -->
+                                                @if(Auth::user()->role->name === 'Dean')
+                                                    @if($compliance->dean_approval_status !== 'approved')
+                                                        <button class="btn btn-sm btn-success me-1 approve-btn" 
+                                                                data-compliance-id="{{ $compliance->id }}" 
+                                                                data-type="semester"
+                                                                @if($compliance->program_head_approval_status !== 'approved') disabled title="Awaiting Program Head approval" @endif>
+                                                            <i class="fas fa-check"></i> Dean Approve
+                                                        </button>
+                                                    @endif
+                                                    @if($compliance->dean_approval_status !== 'needs_revision')
+                                                        <button class="btn btn-sm btn-warning needs-revision-btn" 
+                                                                data-compliance-id="{{ $compliance->id }}" 
+                                                                data-type="semester">
+                                                            <i class="fas fa-edit"></i> Dean Revision
+                                                        </button>
+                                                    @endif
+                                                @endif
+                                            @else
+                                                <span class="badge bg-info">
+                                                    <i class="fas fa-eye"></i> View Only
+                                                </span>
+                                            @endif
+                                        @endauth
                                     @else
                                         <span class="text-muted small">No link submitted</span>
                                     @endif
@@ -200,20 +275,65 @@
                                                         <span class="badge bg-danger">Not Complied</span>
                                                     @endif
                                                     
-                                                    @if($compliance->approval_status)
+                                                    @if($compliance->program_head_approval_status || $compliance->dean_approval_status || $compliance->approval_status)
                                                         <br>
+                                                        <!-- Program Head Approval Status -->
+                                                        @if($compliance->program_head_approval_status)
+                                                            <small class="d-block mt-1">
+                                                                @if($compliance->program_head_approval_status === 'approved')
+                                                                    <span class="text-success">
+                                                                        <i class="fas fa-check-circle"></i> PH: Approved
+                                                                    </span>
+                                                                @elseif($compliance->program_head_approval_status === 'needs_revision')
+                                                                    <span class="text-warning">
+                                                                        <i class="fas fa-edit"></i> PH: Needs Revision
+                                                                    </span>
+                                                                @else
+                                                                    <span class="text-muted">
+                                                                        <i class="fas fa-clock"></i> PH: Pending
+                                                                    </span>
+                                                                @endif
+                                                            </small>
+                                                        @endif
+                                                        
+                                                        <!-- Dean Approval Status -->
+                                                        @if($compliance->dean_approval_status)
+                                                            <small class="d-block">
+                                                                @if($compliance->dean_approval_status === 'approved')
+                                                                    <span class="text-success">
+                                                                        <i class="fas fa-check-double"></i> Dean: Approved
+                                                                    </span>
+                                                                @elseif($compliance->dean_approval_status === 'needs_revision')
+                                                                    <span class="text-warning">
+                                                                        <i class="fas fa-edit"></i> Dean: Needs Revision
+                                                                    </span>
+                                                                @else
+                                                                    <span class="text-muted">
+                                                                        <i class="fas fa-clock"></i> Dean: Pending
+                                                                    </span>
+                                                                @endif
+                                                            </small>
+                                                        @endif
+                                                        
+                                                        <!-- Overall Status -->
                                                         @if($compliance->approval_status === 'approved')
-                                                            <small class="text-success">
-                                                                <i class="fas fa-check-circle"></i> Approved
-                                                            </small>
-                                                        @elseif($compliance->approval_status === 'rejected')
-                                                            <small class="text-danger">
-                                                                <i class="fas fa-times-circle"></i> Rejected
-                                                            </small>
+                                                            <span class="badge bg-success mt-1">
+                                                                <i class="fas fa-trophy"></i> FULLY APPROVED
+                                                            </span>
+                                                        @elseif($compliance->approval_status === 'needs_revision')
+                                                            <span class="badge bg-warning mt-1">
+                                                                <i class="fas fa-edit"></i> NEEDS REVISION
+                                                            </span>
                                                         @else
-                                                            <small class="text-warning">
-                                                                <i class="fas fa-clock"></i> Pending Review
-                                                            </small>
+                                                            @if($compliance->program_head_approval_status === 'approved' && !$compliance->dean_approval_status)
+                                                                <span class="badge bg-info mt-1">
+                                                                    <i class="fas fa-arrow-up"></i> AWAITING DEAN
+                                                                </span>
+                                                            @else
+                                                                <span class="badge bg-secondary mt-1">
+                                                                    <i class="fas fa-clock"></i> PENDING REVIEW
+                                                                </span>
+                                                            @endif
                                                         @endif
                                                     @endif
                                                 </td>
@@ -228,20 +348,50 @@
                                                 </td>
                                                 <td>
                                                     @if($compliance->evidence_link && $compliance->id)
-                                                        @if($compliance->approval_status !== 'approved')
-                                                            <button class="btn btn-sm btn-success me-1 approve-btn" 
-                                                                    data-compliance-id="{{ $compliance->id }}" 
-                                                                    data-type="subject">
-                                                                <i class="fas fa-check"></i> Approve
-                                                            </button>
-                                                        @endif
-                                                        @if($compliance->approval_status !== 'rejected')
-                                                            <button class="btn btn-sm btn-danger reject-btn" 
-                                                                    data-compliance-id="{{ $compliance->id }}" 
-                                                                    data-type="subject">
-                                                                <i class="fas fa-times"></i> Reject
-                                                            </button>
-                                                        @endif
+                                                        @auth
+                                                            @if(Auth::user()->role->name !== 'VPAA')
+                                                                <!-- Program Head Actions -->
+                                                                @if(Auth::user()->role->name === 'Program Head')
+                                                                    @if($compliance->program_head_approval_status !== 'approved')
+                                                                        <button class="btn btn-sm btn-success me-1 approve-btn" 
+                                                                                data-compliance-id="{{ $compliance->id }}" 
+                                                                                data-type="subject">
+                                                                            <i class="fas fa-check"></i> PH Approve
+                                                                        </button>
+                                                                    @endif
+                                                                    @if($compliance->program_head_approval_status !== 'needs_revision')
+                                                                        <button class="btn btn-sm btn-warning needs-revision-btn" 
+                                                                                data-compliance-id="{{ $compliance->id }}" 
+                                                                                data-type="subject">
+                                                                            <i class="fas fa-edit"></i> PH Revision
+                                                                        </button>
+                                                                    @endif
+                                                                @endif
+                                                                
+                                                                <!-- Dean Actions -->
+                                                                @if(Auth::user()->role->name === 'Dean')
+                                                                    @if($compliance->dean_approval_status !== 'approved')
+                                                                        <button class="btn btn-sm btn-success me-1 approve-btn" 
+                                                                                data-compliance-id="{{ $compliance->id }}" 
+                                                                                data-type="subject"
+                                                                                @if($compliance->program_head_approval_status !== 'approved') disabled title="Awaiting Program Head approval" @endif>
+                                                                            <i class="fas fa-check"></i> Dean Approve
+                                                                        </button>
+                                                                    @endif
+                                                                    @if($compliance->dean_approval_status !== 'needs_revision')
+                                                                        <button class="btn btn-sm btn-warning needs-revision-btn" 
+                                                                                data-compliance-id="{{ $compliance->id }}" 
+                                                                                data-type="subject">
+                                                                            <i class="fas fa-edit"></i> Dean Revision
+                                                                        </button>
+                                                                    @endif
+                                                                @endif
+                                                            @else
+                                                                <span class="badge bg-info">
+                                                                    <i class="fas fa-eye"></i> View Only
+                                                                </span>
+                                                            @endif
+                                                        @endauth
                                                     @else
                                                         <span class="text-muted small">No link submitted</span>
                                                     @endif
@@ -319,15 +469,15 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Handle reject buttons
-    document.querySelectorAll('.reject-btn').forEach(btn => {
+    // Handle needs revision buttons
+    document.querySelectorAll('.needs-revision-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             currentAction = 'reject';
             currentComplianceId = this.dataset.complianceId;
             currentType = this.dataset.type;
             
-            document.getElementById('commentsModal').querySelector('.modal-title').textContent = 'Reject Compliance';
-            document.getElementById('reviewComments').placeholder = 'Add rejection reason...';
+            document.getElementById('commentsModal').querySelector('.modal-title').textContent = 'Mark for Revision';
+            document.getElementById('reviewComments').placeholder = 'Add revision comments...';
             
             const modal = new bootstrap.Modal(document.getElementById('commentsModal'));
             modal.show();
@@ -344,7 +494,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Construct URL based on type and action
-        const url = `/monitor/${currentType}-compliance/${currentComplianceId}/${currentAction}`;
+        let url;
+        if (currentAction === 'approve') {
+            url = `/monitor/${currentType}-compliance/${currentComplianceId}/approve`;
+        } else if (currentAction === 'reject') {
+            url = `/monitor/${currentType}-compliance/${currentComplianceId}/needs-revision`;
+        }
         
         fetch(url, {
             method: 'POST',

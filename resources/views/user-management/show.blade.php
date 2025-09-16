@@ -223,8 +223,8 @@
                                         <small class="text-muted">Pending</small>
                                     </div>
                                     <div class="col-md-3">
-                                        <h4 class="text-danger">{{ $user->complianceSubmissions->where('status', 'rejected')->count() }}</h4>
-                                        <small class="text-muted">Rejected</small>
+                                        <h4 class="text-warning">{{ $user->complianceSubmissions->where('status', 'needs_revision')->count() }}</h4>
+                                        <small class="text-muted">Needs Revision</small>
                                     </div>
                                 </div>
                             @else

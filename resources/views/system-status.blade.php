@@ -27,7 +27,7 @@
                         <div class="card-body text-center">
                             <i class="fas fa-workflow fa-3x text-success mb-3"></i>
                             <h5 class="card-title">Compliance Workflows</h5>
-                            <p class="card-text">Submit → Review → Approve/Reject workflow with role-based permissions</p>
+                            <p class="card-text">Submit → Review → Approve/Request Revision workflow with role-based permissions</p>
                             <div class="badge bg-success">✅ Complete</div>
                         </div>
                     </div>
@@ -124,14 +124,14 @@
                                         <li>• Submit documents</li>
                                         <li>• View own submissions</li>
                                         <li>• Track compliance progress</li>
-                                        <li>• Resubmit rejected documents</li>
+                                        <li>• Resubmit documents that need revision</li>
                                     </ul>
                                 </div>
                                 <div class="col-6">
                                     <h6 class="text-success">Administrators</h6>
                                     <ul class="list-unstyled small">
                                         <li>• Review submissions</li>
-                                        <li>• Approve/reject documents</li>
+                                        <li>• Approve/request revisions for documents</li>
                                         <li>• Add review comments</li>
                                         <li>• Generate reports</li>
                                     </ul>

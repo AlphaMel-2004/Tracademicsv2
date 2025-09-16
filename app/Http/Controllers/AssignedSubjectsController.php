@@ -178,7 +178,7 @@ class AssignedSubjectsController extends Controller
         $totalRequirements = $requirements->count();
         $completedRequirements = $requirements->where('status', 'approved')->count();
         $pendingRequirements = $requirements->where('status', 'pending')->count();
-        $rejectedRequirements = $requirements->where('status', 'rejected')->count();
+        $needsRevisionRequirements = $requirements->where('status', 'needs_revision')->count();
         $notSubmittedRequirements = $requirements->where('status', 'not_submitted')->count();
         
         $completionPercentage = $totalRequirements > 0 ? 
@@ -188,7 +188,7 @@ class AssignedSubjectsController extends Controller
             'total_requirements' => $totalRequirements,
             'completed_requirements' => $completedRequirements,
             'pending_requirements' => $pendingRequirements,
-            'rejected_requirements' => $rejectedRequirements,
+            'needs_revision_requirements' => $needsRevisionRequirements,
             'not_submitted_requirements' => $notSubmittedRequirements,
             'completion_percentage' => $completionPercentage
         ];

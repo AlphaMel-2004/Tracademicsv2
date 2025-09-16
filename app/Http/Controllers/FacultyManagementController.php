@@ -62,7 +62,140 @@ class FacultyManagementController extends Controller
         
         return view('faculty.index', compact('faculty', 'stats', 'recentActivities'));
     }
-    
+
+    /**
+     * Show the form for creating a new faculty member
+     */
+    public function create()
+    {
+        $user = Auth::user();
+        
+        // Only Program Heads and above can access this
+        if (!in_array($user->role->name, ['Program Head', 'Dean', 'VPAA', 'MIS'])) {
+            abort(403, 'Unauthorized access');
+        }
+        
+        // For Program Heads, redirect to manage faculty page
+        if ($user->role->name === 'Program Head') {
+            return redirect()->route('faculty.manage');
+        }
+        
+        return view('faculty.create');
+    }
+
+    /**
+     * Store a newly created faculty member
+     */
+    public function store(Request $request)
+    {
+        $user = Auth::user();
+        
+        // Only Program Heads and above can access this
+        if (!in_array($user->role->name, ['Program Head', 'Dean', 'VPAA', 'MIS'])) {
+            abort(403, 'Unauthorized access');
+        }
+        
+        // For Program Heads, redirect to register faculty functionality
+        if ($user->role->name === 'Program Head') {
+            return redirect()->route('faculty.manage');
+        }
+        
+        return redirect()->route('faculty.index');
+    }
+
+    /**
+     * Display the specified faculty member
+     */
+    public function show(User $faculty)
+    {
+        $user = Auth::user();
+        
+        // Only Program Heads and above can access this
+        if (!in_array($user->role->name, ['Program Head', 'Dean', 'VPAA', 'MIS'])) {
+            abort(403, 'Unauthorized access');
+        }
+        
+        // Ensure the user is actually faculty
+        if ($faculty->role->name !== 'Faculty') {
+            abort(404, 'Faculty member not found');
+        }
+        
+        // For Program Heads, ensure they can only view faculty in their program
+        if ($user->role->name === 'Program Head') {
+            $facultyAssignments = FacultyAssignment::where('user_id', $faculty->id)
+                ->whereHas('subject.program', function($query) use ($user) {
+                    $query->where('program_head_id', $user->id);
+                })
+                ->exists();
+                
+            if (!$facultyAssignments) {
+                abort(403, 'You can only view faculty in your program');
+            }
+        }
+        
+        $faculty->load(['department', 'role', 'facultyAssignments.subject', 'complianceSubmissions']);
+        
+        // For now, redirect to manage faculty page with success message
+        return redirect()->route('faculty.manage')->with('info', 'Faculty details for ' . $faculty->name);
+    }
+
+    /**
+     * Show the form for editing the specified faculty member
+     */
+    public function edit(User $faculty)
+    {
+        $user = Auth::user();
+        
+        // Only Program Heads and above can access this
+        if (!in_array($user->role->name, ['Program Head', 'Dean', 'VPAA', 'MIS'])) {
+            abort(403, 'Unauthorized access');
+        }
+        
+        // Ensure the user is actually faculty
+        if ($faculty->role->name !== 'Faculty') {
+            abort(404, 'Faculty member not found');
+        }
+        
+        // For Program Heads, redirect to manage faculty page
+        if ($user->role->name === 'Program Head') {
+            return redirect()->route('faculty.manage')->with('info', 'Faculty editing functionality available through manage faculty interface');
+        }
+        
+        return view('faculty.edit', compact('faculty'));
+    }
+
+    /**
+     * Update the specified faculty member
+     */
+    public function update(Request $request, User $faculty)
+    {
+        $user = Auth::user();
+        
+        // Only Program Heads and above can access this
+        if (!in_array($user->role->name, ['Program Head', 'Dean', 'VPAA', 'MIS'])) {
+            abort(403, 'Unauthorized access');
+        }
+        
+        // Ensure the user is actually faculty
+        if ($faculty->role->name !== 'Faculty') {
+            abort(404, 'Faculty member not found');
+        }
+        
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $faculty->id,
+            'faculty_type' => 'required|in:regular,visiting,part-time',
+        ]);
+        
+        $faculty->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'faculty_type' => $request->faculty_type,
+        ]);
+        
+        return redirect()->route('faculty.manage')->with('success', 'Faculty member updated successfully');
+    }
+
     /**
      * Show faculty assignment form
      */
@@ -135,6 +268,70 @@ class FacultyManagementController extends Controller
         
         return back()->with('success', 'Faculty assigned to subject successfully.');
     }
+
+    /**
+     * Assign multiple subjects to faculty
+     */
+    public function assignSubjects(Request $request, User $faculty)
+    {
+        $user = Auth::user();
+        
+        // Check permissions
+        if (!in_array($user->role->name, ['Program Head', 'Dean', 'VPAA', 'MIS'])) {
+            abort(403, 'Unauthorized access');
+        }
+        
+        // Ensure the user is actually faculty
+        if ($faculty->role->name !== 'Faculty') {
+            abort(404, 'Faculty member not found');
+        }
+        
+        $request->validate([
+            'subject_ids' => 'required|array',
+            'subject_ids.*' => 'exists:subjects,id',
+            'semester_id' => 'required|exists:semesters,id'
+        ]);
+        
+        foreach ($request->subject_ids as $subjectId) {
+            FacultyAssignment::updateOrCreate([
+                'user_id' => $faculty->id,
+                'subject_id' => $subjectId,
+                'semester_id' => $request->semester_id,
+            ]);
+        }
+        
+        return back()->with('success', 'Subjects assigned to faculty successfully.');
+    }
+
+    /**
+     * Remove subject assignment from faculty
+     */
+    public function removeSubject(User $faculty, Subject $subject)
+    {
+        $user = Auth::user();
+        
+        // Check permissions
+        if (!in_array($user->role->name, ['Program Head', 'Dean', 'VPAA', 'MIS'])) {
+            abort(403, 'Unauthorized access');
+        }
+        
+        // Ensure the user is actually faculty
+        if ($faculty->role->name !== 'Faculty') {
+            abort(404, 'Faculty member not found');
+        }
+        
+        // Find and remove the assignment
+        $assignment = FacultyAssignment::where('user_id', $faculty->id)
+            ->where('subject_id', $subject->id)
+            ->first();
+        
+        if ($assignment) {
+            $assignment->delete();
+            return back()->with('success', 'Subject removed from faculty successfully.');
+        }
+        
+        return back()->with('error', 'Assignment not found.');
+    }
     
     /**
      * Remove faculty assignment
@@ -182,5 +379,121 @@ class FacultyManagementController extends Controller
             ->get();
         
         return view('faculty-management.compliance', compact('faculty', 'submissions', 'currentSemester'));
+    }
+    
+    /**
+     * Program Head - Manage Faculty in their Program
+     */
+    public function manageFaculty()
+    {
+        $user = Auth::user();
+        
+        // Only Program Heads can access this
+        if ($user->role->name !== 'Program Head') {
+            abort(403, 'Unauthorized access');
+        }
+        
+        $program = $user->program;
+        if (!$program) {
+            abort(404, 'No program assigned to this Program Head');
+        }
+        
+        // Get faculty members assigned to this program through faculty assignments
+        $facultyIds = $program->facultyAssignments()
+            ->whereHas('user.role', function($query) {
+                $query->where('name', 'Faculty');
+            })
+            ->pluck('user_id')
+            ->unique();
+            
+        $facultyUsers = User::whereIn('id', $facultyIds)
+            ->with(['role', 'facultyAssignments.subject'])
+            ->get();
+        
+        // Also include faculty users that belong to the same department but aren't assigned yet
+        $departmentFaculty = User::where('department_id', $user->department_id)
+            ->whereHas('role', function($query) {
+                $query->where('name', 'Faculty');
+            })
+            ->whereNotIn('id', $facultyIds)
+            ->with(['role'])
+            ->get();
+        
+        // Merge both collections
+        $allFaculty = $facultyUsers->merge($departmentFaculty);
+        
+        return view('faculty-management.manage', compact('program', 'allFaculty', 'user'));
+    }
+    
+    /**
+     * Program Head - Register new Faculty User
+     */
+    public function registerFaculty(Request $request)
+    {
+        $user = Auth::user();
+        
+        // Only Program Heads can access this
+        if ($user->role->name !== 'Program Head') {
+            return response()->json(['error' => 'Unauthorized access'], 403);
+        }
+        
+        $program = $user->program;
+        if (!$program) {
+            return response()->json(['error' => 'No program assigned to this Program Head'], 404);
+        }
+        
+        // Validate the request
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|min:8|confirmed',
+            'employee_id' => 'required|string|unique:users,employee_id',
+        ]);
+        
+        try {
+            // Get Faculty role
+            $facultyRole = \App\Models\Role::where('name', 'Faculty')->first();
+            if (!$facultyRole) {
+                return response()->json(['error' => 'Faculty role not found'], 500);
+            }
+            
+            // Create the faculty user
+            $faculty = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => bcrypt($request->password),
+                'employee_id' => $request->employee_id,
+                'role_id' => $facultyRole->id,
+                'department_id' => $user->department_id, // Same department as Program Head
+                'program_id' => null, // Faculty users don't have direct program assignment
+                'is_active' => true,
+                'email_verified_at' => now(),
+            ]);
+            
+            // Create a faculty assignment to connect the faculty to this program
+            \App\Models\FacultyAssignment::create([
+                'user_id' => $faculty->id,
+                'program_id' => $program->id,
+                'semester_id' => \App\Models\Semester::where('is_active', true)->first()?->id,
+                'assigned_by' => $user->id,
+                'assigned_at' => now(),
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Faculty user registered successfully and assigned to your program',
+                'faculty' => [
+                    'id' => $faculty->id,
+                    'name' => $faculty->name,
+                    'email' => $faculty->email,
+                    'employee_id' => $faculty->employee_id,
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Error creating faculty user: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

@@ -153,15 +153,10 @@ class ComplianceController extends Controller
             'links.*.description' => 'nullable|string|max:500',
         ]);
 
-        // Update submission status if it was rejected
-        if ($submission->status === 'rejected') {
-            $submission->update([
-                'status' => 'submitted',
-                'submitted_at' => now(),
-                'reviewed_at' => null,
-                'reviewed_by' => null,
-                'review_comments' => null,
-            ]);
+                // Update submission status if it needs revision
+        if ($submission->status === 'needs_revision') {
+            $submission->status = 'submitted';
+            $submission->save();
         }
 
         // Handle new file uploads
@@ -269,7 +264,7 @@ class ComplianceController extends Controller
     }
 
     /**
-     * Approve or reject a submission
+     * Approve or request revision for a submission
      */
     public function reviewAction(Request $request, ComplianceSubmission $submission)
     {
@@ -285,7 +280,7 @@ class ComplianceController extends Controller
             'comments' => 'nullable|string|max:1000',
         ]);
 
-        $status = $request->action === 'approve' ? 'approved' : 'rejected';
+        $status = $request->action === 'approve' ? 'approved' : 'needs_revision';
 
         $submission->update([
             'status' => $status,
@@ -296,7 +291,7 @@ class ComplianceController extends Controller
 
         $message = $request->action === 'approve' 
             ? 'Submission approved successfully!' 
-            : 'Submission rejected successfully!';
+            : 'Submission marked for revision successfully!';
 
         return back()->with('success', $message);
     }

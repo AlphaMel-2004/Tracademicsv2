@@ -201,8 +201,8 @@
                             <td class="text-center">
                                 @if($compliance->approval_status === 'approved')
                                     <span class="badge-success">Approved</span>
-                                @elseif($compliance->approval_status === 'rejected')
-                                    <span class="badge-danger">Rejected</span>
+                                @elseif($compliance->approval_status === 'needs_revision')
+                                    <span class="badge-warning">Needs Revision</span>
                                 @elseif($compliance->approval_status === 'pending')
                                     <span class="badge-warning">Pending</span>
                                 @else
@@ -265,8 +265,8 @@
                                     <td class="text-center">
                                         @if($compliance->approval_status === 'approved')
                                             <span class="badge-success">Approved</span>
-                                        @elseif($compliance->approval_status === 'rejected')
-                                            <span class="badge-danger">Rejected</span>
+                                        @elseif($compliance->approval_status === 'needs_revision')
+                                            <span class="badge-warning">Needs Revision</span>
                                         @elseif($compliance->approval_status === 'pending')
                                             <span class="badge-warning">Pending</span>
                                         @else

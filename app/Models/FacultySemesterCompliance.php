@@ -19,7 +19,15 @@ class FacultySemesterCompliance extends Model
         'approval_status',
         'approved_by',
         'approved_at',
-        'review_comments'
+        'review_comments',
+        'program_head_approval_status',
+        'program_head_approved_by',
+        'program_head_approved_at',
+        'program_head_comments',
+        'dean_approval_status',
+        'dean_approved_by',
+        'dean_approved_at',
+        'dean_comments'
     ];
 
     /**
@@ -44,6 +52,22 @@ class FacultySemesterCompliance extends Model
     public function semester(): BelongsTo
     {
         return $this->belongsTo(Semester::class);
+    }
+
+    /**
+     * Get the program head who approved this compliance.
+     */
+    public function programHeadApprover(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'program_head_approved_by');
+    }
+
+    /**
+     * Get the dean who approved this compliance.
+     */
+    public function deanApprover(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'dean_approved_by');
     }
 
     /**

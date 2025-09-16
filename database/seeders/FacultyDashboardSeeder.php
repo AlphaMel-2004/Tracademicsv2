@@ -29,7 +29,7 @@ class FacultyDashboardSeeder extends Seeder
 
         // Create sample compliance submissions
         $docTypes = DocumentType::take(5)->get();
-        $statuses = ['pending', 'approved', 'under_review', 'rejected'];
+        $statuses = ['pending', 'approved', 'under_review', 'needs_revision'];
 
         foreach ($docTypes as $index => $docType) {
             ComplianceSubmission::firstOrCreate([

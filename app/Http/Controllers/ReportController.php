@@ -35,7 +35,7 @@ class ReportController extends Controller
         $stats = [
             'total_submissions' => $baseQuery->count(),
             'approved_submissions' => $baseQuery->where('status', 'approved')->count(),
-            'rejected_submissions' => $baseQuery->where('status', 'rejected')->count(),
+            'needs_revision_submissions' => $baseQuery->where('status', 'needs_revision')->count(),
             'pending_submissions' => $baseQuery->where('status', 'submitted')->count(),
         ];
         

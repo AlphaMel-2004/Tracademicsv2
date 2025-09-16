@@ -57,7 +57,7 @@
             background-color: #d1edff;
             color: #0c5460;
         }
-        .status-rejected {
+        .status-needs-revision {
             background-color: #f8d7da;
             color: #721c24;
         }
@@ -138,7 +138,7 @@
                 <h2>Document Approved ✅</h2>
                 <p>Hello {{ $submission->user->name }},</p>
                 <p>Congratulations! Your document submission has been approved.</p>
-            @elseif($type === 'rejected')
+            @elseif($type === 'needs_revision')
                 <h2>Document Requires Attention ⚠️</h2>
                 <p>Hello {{ $submission->user->name }},</p>
                 <p>Your document submission requires some modifications before it can be approved.</p>
@@ -171,7 +171,7 @@
                 @endif
             </div>
             
-            @if($submission->review_comments && ($type === 'approved' || $type === 'rejected'))
+            @if($submission->review_comments && ($type === 'approved' || $type === 'needs_revision'))
                 <div class="comments-box">
                     <div class="comments-title">Review Comments:</div>
                     <div>{{ $submission->review_comments }}</div>
@@ -184,7 +184,7 @@
             @elseif($type === 'approved')
                 <p>No further action is required for this submission. Thank you for your compliance!</p>
                 <a href="{{ route('compliance.my-submissions') }}" class="action-button">View My Submissions</a>
-            @elseif($type === 'rejected')
+            @elseif($type === 'needs_revision')
                 <p>Please review the comments above and resubmit your document with the necessary corrections.</p>
                 <a href="{{ route('compliance.my-submissions') }}" class="action-button">View & Resubmit</a>
             @endif

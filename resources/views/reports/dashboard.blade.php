@@ -67,8 +67,8 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between">
                                 <div>
-                                    <h6 class="card-title mb-1">Rejected</h6>
-                                    <h3 class="mb-0">{{ $stats['rejected_submissions'] ?? 0 }}</h3>
+                                    <h6 class="card-title mb-1">Needs Revision</h6>
+                                    <h3 class="mb-0">{{ $stats['needs_revision_submissions'] ?? 0 }}</h3>
                                 </div>
                                 <i class="fas fa-times-circle fa-2x opacity-75"></i>
                             </div>

@@ -106,7 +106,7 @@
         .status-pending { background-color: #ffc107; color: #000; }
         .status-submitted { background-color: #17a2b8; color: #fff; }
         .status-approved { background-color: #28a745; color: #fff; }
-        .status-rejected { background-color: #dc3545; color: #fff; }
+        .status-needs-revision { background-color: #ffc107; color: #000; }
         .status-under-review { background-color: #6f42c1; color: #fff; }
         
         /* Enhanced Faculty Dashboard Styles */
@@ -235,6 +235,11 @@
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('monitor.compliance.*') ? 'active' : '' }}" href="{{ route('monitor.compliance') }}">
                                 <i class="fas fa-clipboard-check me-2"></i>Monitor Compliances
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('faculty.manage.*') ? 'active' : '' }}" href="{{ route('faculty.manage') }}">
+                                <i class="fas fa-users-cog me-2"></i>Manage Faculty
                             </a>
                         </li>
                         <li class="nav-item">

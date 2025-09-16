@@ -88,8 +88,8 @@
         <div class="col-md-3">
             <div class="card bg-danger text-white">
                 <div class="card-body text-center">
-                    <h4>{{ $stats['rejected_requirements'] }}</h4>
-                    <small>Rejected</small>
+                    <h4>{{ $stats['needs_revision_requirements'] }}</h4>
+                    <small>Needs Revision</small>
                 </div>
             </div>
         </div>

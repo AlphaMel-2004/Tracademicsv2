@@ -23,7 +23,7 @@
                             <div class="card h-100">
                                 <div class="card-header d-flex justify-content-between align-items-center">
                                     <h6 class="mb-0">{{ $submission->documentType->name }}</h6>
-                                    <span class="badge bg-{{ $submission->status === 'approved' ? 'success' : ($submission->status === 'rejected' ? 'danger' : 'warning') }}">
+                                    <span class="badge bg-{{ $submission->status === 'approved' ? 'success' : ($submission->status === 'needs_revision' ? 'warning' : 'secondary') }}">
                                         {{ ucfirst($submission->status) }}
                                     </span>
                                 </div>
@@ -126,12 +126,12 @@
                                     @endif
                                 </div>
                                 <div class="card-footer">
-                                    @if($submission->status === 'rejected' || $submission->status === 'submitted')
+                                    @if($submission->status === 'needs_revision' || $submission->status === 'submitted')
                                         <button type="button" class="btn btn-primary btn-sm" 
                                                 data-bs-toggle="modal" 
                                                 data-bs-target="#updateModal{{ $submission->id }}">
                                             <i class="fas fa-edit me-1"></i>
-                                            {{ $submission->status === 'rejected' ? 'Resubmit' : 'Update' }}
+                                            {{ $submission->status === 'needs_revision' ? 'Resubmit' : 'Update' }}
                                         </button>
                                     @endif
                                     

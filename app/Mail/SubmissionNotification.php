@@ -23,7 +23,7 @@ class SubmissionNotification extends Mailable
     public function __construct(ComplianceSubmission $submission, string $type)
     {
         $this->submission = $submission;
-        $this->type = $type; // 'submitted', 'approved', 'rejected'
+        $this->type = $type; // 'submitted', 'approved', 'needs_revision'
     }
 
     /**
@@ -34,7 +34,7 @@ class SubmissionNotification extends Mailable
         $subject = match($this->type) {
             'submitted' => 'Document Submitted Successfully - TracAdemics',
             'approved' => 'Document Approved - TracAdemics',
-            'rejected' => 'Document Requires Attention - TracAdemics',
+            'needs_revision' => 'Document Requires Attention - TracAdemics',
             default => 'TracAdemics Notification'
         };
 

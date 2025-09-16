@@ -204,7 +204,7 @@
                     <div class="mt-3">
                         @php
                             $pendingCount = $subjectData['requirements']->where('status', 'pending')->count();
-                            $rejectedCount = $subjectData['requirements']->where('status', 'rejected')->count();
+                            $needsRevisionCount = $subjectData['requirements']->where('status', 'needs_revision')->count();
                             $notSubmittedCount = $subjectData['requirements']->where('status', 'not_submitted')->count();
                         @endphp
                         
@@ -214,9 +214,9 @@
                             </div>
                         @endif
                         
-                        @if($rejectedCount > 0)
-                            <div class="text-danger small">
-                                <i class="fas fa-times-circle me-1"></i>{{ $rejectedCount }} need resubmission
+                        @if($needsRevisionCount > 0)
+                            <div class="text-warning small">
+                                <i class="fas fa-edit me-1"></i>{{ $needsRevisionCount }} need revision
                             </div>
                         @endif
                         
