@@ -47,9 +47,8 @@
                         <thead class="table-dark">
                             <tr>
                                 <th>Faculty Member</th>
-                                <th>Employee ID</th>
                                 <th>Email</th>
-                                <th>Program Assignment</th>
+                                <th>Faculty Type</th>
                                 <th>Subject Assignments</th>
                                 <th>Last Login</th>
                                 <th>Status</th>
@@ -71,24 +70,11 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td>
-                                    <span class="badge bg-secondary">{{ $faculty->employee_id }}</span>
-                                </td>
                                 <td>{{ $faculty->email }}</td>
                                 <td>
-                                    @php
-                                        $hasAssignment = $faculty->facultyAssignments->where('program_id', $program->id)->count() > 0;
-                                    @endphp
-                                    
-                                    @if($hasAssignment)
-                                        <span class="badge bg-success">
-                                            <i class="fas fa-check-circle"></i> Assigned to {{ $program->name }}
-                                        </span>
-                                    @else
-                                        <span class="badge bg-warning">
-                                            <i class="fas fa-exclamation-triangle"></i> Not assigned to program
-                                        </span>
-                                    @endif
+                                    <span class="badge bg-info">
+                                        {{ $faculty->faculty_type ? ucfirst($faculty->faculty_type) : 'Regular' }}
+                                    </span>
                                 </td>
                                 <td>
                                     @php
@@ -114,16 +100,20 @@
                                     @if($faculty->last_login_at)
                                         <small>{{ $faculty->last_login_at->diffForHumans() }}</small>
                                         <br>
-                                        <span class="badge bg-success">Active</span>
+                                        <span class="badge bg-success">Recently Active</span>
                                     @else
                                         <span class="badge bg-secondary">Never logged in</span>
                                     @endif
                                 </td>
                                 <td>
-                                    @if($faculty->is_active)
+                                    @php
+                                        $hasSubjectAssignments = $faculty->facultyAssignments->where('program_id', $program->id)->count() > 0;
+                                    @endphp
+                                    
+                                    @if($hasSubjectAssignments)
                                         <span class="badge bg-success">Active</span>
                                     @else
-                                        <span class="badge bg-danger">Inactive</span>
+                                        <span class="badge bg-warning">Inactive</span>
                                     @endif
                                 </td>
                                 <td>

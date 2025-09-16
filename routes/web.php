@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ComplianceController;
-use App\Http\Controllers\ComplianceActionController;
+// use App\Http\Controllers\ComplianceActionController; // Temporarily disabled
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\FacultyManagementController;
 use App\Http\Controllers\SubjectManagementController;
@@ -17,6 +17,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\MonitorController;
 use App\Http\Controllers\AssignedSubjectsController;
 use App\Http\Controllers\ProgramsManagementController;
+use App\Http\Controllers\FacultySemesterComplianceController;
 
 // Redirect root to login
 Route::get('/', function () {
@@ -166,11 +167,11 @@ Route::middleware(['auth'])->group(function () {
         // Program Head Monitor Routes
         Route::get('/compliance', [MonitorController::class, 'compliance'])->name('compliance');
         
-        // Compliance Action Routes (for Program Heads)
-        Route::post('/semester-compliance/{id}/approve', [ComplianceActionController::class, 'approveSemesterCompliance'])->name('semester.compliance.approve');
-        Route::post('/semester-compliance/{id}/needs-revision', [ComplianceActionController::class, 'rejectSemesterCompliance'])->name('semester.compliance.needs_revision');
-        Route::post('/subject-compliance/{id}/approve', [ComplianceActionController::class, 'approveSubjectCompliance'])->name('subject.compliance.approve');
-        Route::post('/subject-compliance/{id}/needs-revision', [ComplianceActionController::class, 'rejectSubjectCompliance'])->name('subject.compliance.needs_revision');
+        // Compliance Approval Routes (for Program Heads and Deans)
+        Route::post('/semester-compliance/{id}/approve', [MonitorController::class, 'approveSemesterCompliance'])->name('semester.compliance.approve');
+        Route::post('/semester-compliance/{id}/needs-revision', [MonitorController::class, 'rejectSemesterCompliance'])->name('semester.compliance.needs_revision');
+        Route::post('/subject-compliance/{id}/approve', [MonitorController::class, 'approveSubjectCompliance'])->name('subject.compliance.approve');
+        Route::post('/subject-compliance/{id}/needs-revision', [MonitorController::class, 'rejectSubjectCompliance'])->name('subject.compliance.needs_revision');
     });
     
     // Faculty Assigned Subjects routes
@@ -196,6 +197,7 @@ Route::middleware(['auth'])->group(function () {
 
 // Faculty Semester Compliance routes
 Route::middleware(['auth'])->group(function () {
+    // Faculty Semester Compliance Update Route
     Route::put('/faculty-compliance/{id}', [\App\Http\Controllers\FacultySemesterComplianceController::class, 'update'])->name('faculty-compliance.update');
     Route::put('/subject-compliance/{id}', [\App\Http\Controllers\SubjectComplianceController::class, 'update'])->name('subject-compliance.update');
     

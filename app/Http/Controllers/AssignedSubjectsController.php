@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Subject;
 use App\Models\FacultyAssignment;
 use App\Models\DocumentType;
-use App\Models\ComplianceSubmission;
 use App\Models\FacultySemesterCompliance;
 use App\Models\SubjectCompliance;
 use App\Models\Semester;
@@ -32,13 +31,15 @@ class AssignedSubjectsController extends Controller
         
         $subjects = $assignments->map(function ($assignment) use ($user) {
             $subject = $assignment->subject;
+            $currentSemester = Semester::where('is_active', true)->first();
             
             // Get document types required for this subject
-            $documentTypes = DocumentType::all();
+            $documentTypes = DocumentType::where('submission_type', 'subject')->get();
             
             // Get existing submissions for this subject
-            $submissions = ComplianceSubmission::where('user_id', $user->id)
+            $submissions = SubjectCompliance::where('user_id', $user->id)
                 ->where('subject_id', $subject->id)
+                ->where('semester_id', $currentSemester ? $currentSemester->id : null)
                 ->with('documentType')
                 ->get()
                 ->keyBy('document_type_id');
@@ -49,9 +50,9 @@ class AssignedSubjectsController extends Controller
                 return [
                     'document_type' => $docType,
                     'submission' => $submission,
-                    'status' => $submission ? $submission->status : 'not_submitted',
-                    'submitted_at' => $submission ? $submission->submitted_at : null,
-                    'review_comments' => $submission ? $submission->review_comments : null
+                    'status' => $submission ? $submission->approval_status : 'not_submitted',
+                    'submitted_at' => $submission ? $submission->created_at : null,
+                    'review_comments' => $submission ? $submission->comments : null
                 ];
             });
             
@@ -141,6 +142,9 @@ class AssignedSubjectsController extends Controller
             ->keyBy('document_type_id');
         
         // Create or get compliance records for each subject document type
+        // Get current active semester
+        $currentSemester = Semester::where('is_active', true)->first();
+        
         $subjectCompliances = collect();
         foreach ($documentTypes as $docType) {
             if ($existingCompliances->has($docType->id)) {
@@ -152,6 +156,7 @@ class AssignedSubjectsController extends Controller
                     'user_id' => $user->id,
                     'subject_id' => $subject->id,
                     'document_type_id' => $docType->id,
+                    'semester_id' => $currentSemester ? $currentSemester->id : null,
                     'evidence_link' => '',
                     'self_evaluation_status' => 'Not Complied',
                 ]);

@@ -398,7 +398,7 @@ class FacultyManagementController extends Controller
             abort(404, 'No program assigned to this Program Head');
         }
         
-        // Get faculty members assigned to this program through faculty assignments
+        // Get only faculty members that are assigned to this specific program
         $facultyIds = $program->facultyAssignments()
             ->whereHas('user.role', function($query) {
                 $query->where('name', 'Faculty');
@@ -406,22 +406,10 @@ class FacultyManagementController extends Controller
             ->pluck('user_id')
             ->unique();
             
-        $facultyUsers = User::whereIn('id', $facultyIds)
+        $allFaculty = User::whereIn('id', $facultyIds)
             ->with(['role', 'facultyAssignments.subject'])
             ->get();
-        
-        // Also include faculty users that belong to the same department but aren't assigned yet
-        $departmentFaculty = User::where('department_id', $user->department_id)
-            ->whereHas('role', function($query) {
-                $query->where('name', 'Faculty');
-            })
-            ->whereNotIn('id', $facultyIds)
-            ->with(['role'])
-            ->get();
-        
-        // Merge both collections
-        $allFaculty = $facultyUsers->merge($departmentFaculty);
-        
+
         return view('faculty-management.manage', compact('program', 'allFaculty', 'user'));
     }
     

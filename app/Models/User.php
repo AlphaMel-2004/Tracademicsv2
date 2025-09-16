@@ -96,22 +96,6 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the compliance submissions for the user.
-     */
-    public function complianceSubmissions(): HasMany
-    {
-        return $this->hasMany(ComplianceSubmission::class);
-    }
-
-    /**
-     * Get the semester sessions for the user.
-     */
-    public function semesterSessions(): HasMany
-    {
-        return $this->hasMany(SemesterSession::class);
-    }
-
-    /**
      * Get the faculty semester compliances for the user.
      */
     public function facultySemesterCompliances(): HasMany
@@ -125,6 +109,14 @@ class User extends Authenticatable
     public function subjectCompliances(): HasMany
     {
         return $this->hasMany(SubjectCompliance::class);
+    }
+
+    /**
+     * Get the semester sessions for the user.
+     */
+    public function semesterSessions(): HasMany
+    {
+        return $this->hasMany(SemesterSession::class);
     }
 
     /**

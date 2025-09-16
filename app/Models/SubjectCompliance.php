@@ -14,20 +14,26 @@ class SubjectCompliance extends Model
         'user_id',
         'subject_id',
         'document_type_id',
+        'semester_id',
         'evidence_link',
+        'evidence_description',
         'self_evaluation_status',
         'approval_status',
-        'approved_by',
-        'approved_at',
-        'review_comments',
         'program_head_approval_status',
-        'program_head_approved_by',
-        'program_head_approved_at',
-        'program_head_comments',
         'dean_approval_status',
+        'program_head_comments',
+        'dean_comments',
+        'program_head_approved_by',
         'dean_approved_by',
+        'program_head_approved_at',
         'dean_approved_at',
-        'dean_comments'
+        'submitted_at',
+    ];
+
+    protected $casts = [
+        'submitted_at' => 'datetime',
+        'program_head_approved_at' => 'datetime',
+        'dean_approved_at' => 'datetime',
     ];
 
     /**
@@ -39,7 +45,7 @@ class SubjectCompliance extends Model
     }
 
     /**
-     * Get the subject that this compliance belongs to.
+     * Get the subject for the compliance.
      */
     public function subject(): BelongsTo
     {
@@ -47,7 +53,7 @@ class SubjectCompliance extends Model
     }
 
     /**
-     * Get the document type for this compliance.
+     * Get the document type for the compliance.
      */
     public function documentType(): BelongsTo
     {
@@ -55,7 +61,15 @@ class SubjectCompliance extends Model
     }
 
     /**
-     * Get the program head who approved this compliance.
+     * Get the semester for the compliance.
+     */
+    public function semester(): BelongsTo
+    {
+        return $this->belongsTo(Semester::class);
+    }
+
+    /**
+     * Get the program head approver.
      */
     public function programHeadApprover(): BelongsTo
     {
@@ -63,7 +77,7 @@ class SubjectCompliance extends Model
     }
 
     /**
-     * Get the dean who approved this compliance.
+     * Get the dean approver.
      */
     public function deanApprover(): BelongsTo
     {

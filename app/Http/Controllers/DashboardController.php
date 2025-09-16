@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
-use App\Models\ComplianceSubmission;
+use App\Models\FacultySemesterCompliance;
+use App\Models\SubjectCompliance;
 use App\Models\DocumentType;
 use App\Models\Semester;
 use App\Models\UserLog;
@@ -17,8 +18,8 @@ class DashboardController extends Controller
      */
     public function index()
     {
+        // Get user with relationships loaded
         $user = Auth::user();
-        $user->load(['role', 'department', 'currentSemester']);
 
         // Role-based dashboard data
         $dashboardData = $this->getDashboardData($user);
@@ -54,9 +55,9 @@ class DashboardController extends Controller
     {
         return [
             'total_users' => User::count(),
-            'total_submissions' => ComplianceSubmission::count(),
-            'pending_submissions' => ComplianceSubmission::where('status', 'pending')->count(),
-            'approved_submissions' => ComplianceSubmission::where('status', 'approved')->count(),
+            'total_submissions' => FacultySemesterCompliance::count() + SubjectCompliance::count(),
+            'pending_submissions' => FacultySemesterCompliance::where('approval_status', 'pending')->count() + SubjectCompliance::where('approval_status', 'pending')->count(),
+            'approved_submissions' => FacultySemesterCompliance::where('approval_status', 'approved')->count() + SubjectCompliance::where('approval_status', 'approved')->count(),
             'active_semester' => Semester::where('is_active', true)->first(),
             'recent_activities' => UserLog::with(['user.role'])
                                          ->orderBy('created_at', 'desc')
@@ -71,8 +72,8 @@ class DashboardController extends Controller
     private function getVPAAData()
     {
         return [
-            'total_submissions' => ComplianceSubmission::count(),
-            'pending_reviews' => ComplianceSubmission::where('status', 'submitted')->count(),
+            'total_submissions' => FacultySemesterCompliance::count() + SubjectCompliance::count(),
+            'pending_reviews' => FacultySemesterCompliance::where('approval_status', 'submitted')->count() + SubjectCompliance::where('approval_status', 'submitted')->count(),
             'compliance_rate' => $this->calculateComplianceRate(),
             'active_semester' => Semester::where('is_active', true)->first(),
         ];
@@ -83,15 +84,21 @@ class DashboardController extends Controller
      */
     private function getDeanData(User $user)
     {
-        $departmentSubmissions = ComplianceSubmission::whereHas('user', function ($query) use ($user) {
-            $query->where('department_id', $user->department_id);
-        });
+        $departmentSubmissions = collect()
+            ->merge(FacultySemesterCompliance::whereHas('user', function ($query) use ($user) {
+                $query->where('department_id', $user->department_id);
+            })->get())
+            ->merge(SubjectCompliance::whereHas('user', function ($query) use ($user) {
+                $query->where('department_id', $user->department_id);
+            })->get());
 
         return [
             'department_submissions' => $departmentSubmissions->count(),
-            'pending_submissions' => $departmentSubmissions->where('status', 'pending')->count(),
+            'pending_submissions' => $departmentSubmissions->where('approval_status', 'pending')->count(),
             'faculty_count' => User::where('department_id', $user->department_id)
-                                  ->where('role_id', 5)->count(), // Faculty role
+                                  ->whereHas('role', function($query) {
+                                      $query->where('name', 'Faculty');
+                                  })->count(),
             'active_semester' => Semester::where('is_active', true)->first(),
         ];
     }
@@ -101,11 +108,17 @@ class DashboardController extends Controller
      */
     private function getProgramHeadData(User $user)
     {
-        // This would need program assignments - for now, basic data
-        return [
-            'program_submissions' => ComplianceSubmission::whereHas('user', function ($query) use ($user) {
+        // Get submissions from faculty in the same department
+        $programSubmissions = collect()
+            ->merge(FacultySemesterCompliance::whereHas('user', function ($query) use ($user) {
                 $query->where('department_id', $user->department_id);
-            })->count(),
+            })->get())
+            ->merge(SubjectCompliance::whereHas('user', function ($query) use ($user) {
+                $query->where('department_id', $user->department_id);
+            })->get());
+
+        return [
+            'program_submissions' => $programSubmissions->count(),
             'active_semester' => Semester::where('is_active', true)->first(),
         ];
     }
@@ -135,16 +148,21 @@ class DashboardController extends Controller
             ];
         }
 
-        $mySubmissions = ComplianceSubmission::where('user_id', $user->id)
-                                           ->where('semester_id', $currentSemester->id);
+        // Get faculty semester compliances
+        $semesterCompliances = FacultySemesterCompliance::where('user_id', $user->id)
+                                                        ->where('semester_id', $currentSemester->id)
+                                                        ->get();
+
+        // Get subject compliances
+        $subjectCompliances = SubjectCompliance::where('user_id', $user->id)
+                                              ->where('semester_id', $currentSemester->id)
+                                              ->get();
+
+        // Merge all compliances
+        $allCompliances = $semesterCompliances->merge($subjectCompliances);
 
         // Get recent submissions (last 5)
-        $recentSubmissions = ComplianceSubmission::where('user_id', $user->id)
-                                                ->where('semester_id', $currentSemester->id)
-                                                ->with(['documentType'])
-                                                ->orderBy('created_at', 'desc')
-                                                ->take(5)
-                                                ->get();
+        $recentSubmissions = $allCompliances->sortByDesc('created_at')->take(5);
 
         // Get user's subjects (if faculty assignments exist)
         $mySubjects = \App\Models\FacultyAssignment::where('user_id', $user->id)
@@ -154,7 +172,7 @@ class DashboardController extends Controller
 
         // Calculate compliance rate
         $totalRequired = DocumentType::where('is_required', true)->count();
-        $submitted = $mySubmissions->where('status', 'approved')->count();
+        $submitted = $allCompliances->where('approval_status', 'approved')->count();
         $complianceRate = $totalRequired > 0 ? round(($submitted / $totalRequired) * 100) : 0;
 
         // Get document types categorized
@@ -166,11 +184,11 @@ class DashboardController extends Controller
         $upcomingDeadlines = $documentTypes->where('is_required', true)->take(3);
 
         return [
-            'my_submissions' => $mySubmissions->count(),
-            'pending_submissions' => $mySubmissions->where('status', 'pending')->count(),
-            'approved_submissions' => $mySubmissions->where('status', 'approved')->count(),
-            'needs_revision_submissions' => $mySubmissions->where('status', 'needs_revision')->count(),
-            'under_review_submissions' => $mySubmissions->where('status', 'under_review')->count(),
+            'my_submissions' => $allCompliances->count(),
+            'pending_submissions' => $allCompliances->where('approval_status', 'pending')->count(),
+            'approved_submissions' => $allCompliances->where('approval_status', 'approved')->count(),
+            'needs_revision_submissions' => $allCompliances->where('approval_status', 'needs_revision')->count(),
+            'under_review_submissions' => $allCompliances->where('approval_status', 'submitted')->count(),
             'document_types' => $documentTypes,
             'active_semester' => $currentSemester,
             'my_recent_submissions' => $recentSubmissions,
@@ -188,7 +206,11 @@ class DashboardController extends Controller
     private function calculateComplianceRate()
     {
         $totalRequired = DocumentType::where('is_required', true)->count();
-        $totalSubmitted = ComplianceSubmission::where('status', '!=', 'pending')->count();
+        
+        // Count approved submissions from both compliance types
+        $semesterApproved = FacultySemesterCompliance::where('approval_status', 'approved')->count();
+        $subjectApproved = SubjectCompliance::where('approval_status', 'approved')->count();
+        $totalSubmitted = $semesterApproved + $subjectApproved;
         
         if ($totalRequired > 0) {
             return round(($totalSubmitted / $totalRequired) * 100, 2);

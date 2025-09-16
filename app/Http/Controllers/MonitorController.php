@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\Department;
 use App\Models\Program;
-use App\Models\ComplianceSubmission;
 use App\Models\FacultySemesterCompliance;
 use App\Models\SubjectCompliance;
 use App\Models\DocumentType;
@@ -34,11 +33,22 @@ class MonitorController extends Controller
                     $query->where('name', 'Faculty');
                 })->pluck('id');
                 
-                $totalSubmissions = ComplianceSubmission::whereIn('user_id', $facultyIds)->count();
-                $approvedSubmissions = ComplianceSubmission::whereIn('user_id', $facultyIds)
-                    ->where('status', 'approved')->count();
-                $pendingSubmissions = ComplianceSubmission::whereIn('user_id', $facultyIds)
-                    ->where('status', 'pending')->count();
+                // Get submissions from both compliance types
+                $semesterSubmissions = FacultySemesterCompliance::whereIn('user_id', $facultyIds)->count();
+                $subjectSubmissions = SubjectCompliance::whereIn('user_id', $facultyIds)->count();
+                $totalSubmissions = $semesterSubmissions + $subjectSubmissions;
+                
+                $semesterApproved = FacultySemesterCompliance::whereIn('user_id', $facultyIds)
+                    ->where('approval_status', 'approved')->count();
+                $subjectApproved = SubjectCompliance::whereIn('user_id', $facultyIds)
+                    ->where('approval_status', 'approved')->count();
+                $approvedSubmissions = $semesterApproved + $subjectApproved;
+                
+                $semesterPending = FacultySemesterCompliance::whereIn('user_id', $facultyIds)
+                    ->where('approval_status', 'pending')->count();
+                $subjectPending = SubjectCompliance::whereIn('user_id', $facultyIds)
+                    ->where('approval_status', 'pending')->count();
+                $pendingSubmissions = $semesterPending + $subjectPending;
                 
                 $complianceRate = $totalSubmissions > 0 ? 
                     round(($approvedSubmissions / $totalSubmissions) * 100, 1) : 0;
@@ -59,9 +69,11 @@ class MonitorController extends Controller
             'total_users' => User::whereHas('role', function($query) {
                 $query->whereIn('name', ['Faculty', 'Program Head', 'Dean']);
             })->count(),
-            'total_submissions' => ComplianceSubmission::count(),
-            'approved_submissions' => ComplianceSubmission::where('status', 'approved')->count(),
-            'pending_submissions' => ComplianceSubmission::where('status', 'pending')->count(),
+            'total_submissions' => FacultySemesterCompliance::count() + SubjectCompliance::count(),
+            'approved_submissions' => FacultySemesterCompliance::where('approval_status', 'approved')->count() + 
+                                    SubjectCompliance::where('approval_status', 'approved')->count(),
+            'pending_submissions' => FacultySemesterCompliance::where('approval_status', 'pending')->count() + 
+                                   SubjectCompliance::where('approval_status', 'pending')->count(),
         ];
         
         $overallStats['compliance_rate'] = $overallStats['total_submissions'] > 0 ? 
@@ -92,9 +104,15 @@ class MonitorController extends Controller
                     ->pluck('user_id')
                     ->unique();
                 
-                $totalSubmissions = ComplianceSubmission::whereIn('user_id', $facultyIds)->count();
-                $approvedSubmissions = ComplianceSubmission::whereIn('user_id', $facultyIds)
-                    ->where('status', 'approved')->count();
+                $semesterSubmissions = FacultySemesterCompliance::whereIn('user_id', $facultyIds)->count();
+                $subjectSubmissions = SubjectCompliance::whereIn('user_id', $facultyIds)->count();
+                $totalSubmissions = $semesterSubmissions + $subjectSubmissions;
+                
+                $semesterApproved = FacultySemesterCompliance::whereIn('user_id', $facultyIds)
+                    ->where('approval_status', 'approved')->count();
+                $subjectApproved = SubjectCompliance::whereIn('user_id', $facultyIds)
+                    ->where('approval_status', 'approved')->count();
+                $approvedSubmissions = $semesterApproved + $subjectApproved;
                 
                 $complianceRate = $totalSubmissions > 0 ? 
                     round(($approvedSubmissions / $totalSubmissions) * 100, 1) : 0;
@@ -249,9 +267,15 @@ class MonitorController extends Controller
                     ->pluck('user_id')
                     ->unique();
                 
-                $totalSubmissions = ComplianceSubmission::whereIn('user_id', $facultyIds)->count();
-                $approvedSubmissions = ComplianceSubmission::whereIn('user_id', $facultyIds)
-                    ->where('status', 'approved')->count();
+                $semesterSubmissions = FacultySemesterCompliance::whereIn('user_id', $facultyIds)->count();
+                $subjectSubmissions = SubjectCompliance::whereIn('user_id', $facultyIds)->count();
+                $totalSubmissions = $semesterSubmissions + $subjectSubmissions;
+                
+                $semesterApproved = FacultySemesterCompliance::whereIn('user_id', $facultyIds)
+                    ->where('approval_status', 'approved')->count();
+                $subjectApproved = SubjectCompliance::whereIn('user_id', $facultyIds)
+                    ->where('approval_status', 'approved')->count();
+                $approvedSubmissions = $semesterApproved + $subjectApproved;
                 
                 $complianceRate = $totalSubmissions > 0 ? 
                     round(($approvedSubmissions / $totalSubmissions) * 100, 1) : 0;
@@ -511,5 +535,167 @@ class MonitorController extends Controller
         });
         
         return view('monitor.program-head-compliance', compact('program', 'facultyCompliance', 'currentSemester'));
+    }
+
+    /**
+     * Approve semester compliance
+     */
+    public function approveSemesterCompliance(Request $request, $id)
+    {
+        $request->validate([
+            'comments' => 'nullable|string|max:500'
+        ]);
+
+        $compliance = FacultySemesterCompliance::findOrFail($id);
+        $user = Auth::user();
+        
+        // Determine which approval level based on user role
+        if ($user->role->name === 'Program Head') {
+            $compliance->update([
+                'program_head_approval_status' => 'approved',
+                'program_head_comments' => $request->comments,
+                'program_head_approved_by' => $user->id,
+                'program_head_approved_at' => now(),
+            ]);
+        } elseif ($user->role->name === 'Dean') {
+            $compliance->update([
+                'dean_approval_status' => 'approved',
+                'dean_comments' => $request->comments,
+                'dean_approved_by' => $user->id,
+                'dean_approved_at' => now(),
+            ]);
+        } else {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        // Update overall approval status if both levels approved
+        if ($compliance->program_head_approval_status === 'approved' && $compliance->dean_approval_status === 'approved') {
+            $compliance->update(['approval_status' => 'approved']);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Semester compliance approved successfully'
+        ]);
+    }
+
+    /**
+     * Reject semester compliance (needs revision)
+     */
+    public function rejectSemesterCompliance(Request $request, $id)
+    {
+        $request->validate([
+            'comments' => 'required|string|max:500'
+        ]);
+
+        $compliance = FacultySemesterCompliance::findOrFail($id);
+        $user = Auth::user();
+        
+        // Determine which approval level based on user role
+        if ($user->role->name === 'Program Head') {
+            $compliance->update([
+                'program_head_approval_status' => 'needs_revision',
+                'program_head_comments' => $request->comments,
+                'program_head_approved_by' => $user->id,
+                'program_head_approved_at' => now(),
+                'approval_status' => 'needs_revision'
+            ]);
+        } elseif ($user->role->name === 'Dean') {
+            $compliance->update([
+                'dean_approval_status' => 'needs_revision',
+                'dean_comments' => $request->comments,
+                'dean_approved_by' => $user->id,
+                'dean_approved_at' => now(),
+                'approval_status' => 'needs_revision'
+            ]);
+        } else {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Semester compliance marked for revision'
+        ]);
+    }
+
+    /**
+     * Approve subject compliance
+     */
+    public function approveSubjectCompliance(Request $request, $id)
+    {
+        $request->validate([
+            'comments' => 'nullable|string|max:500'
+        ]);
+
+        $compliance = SubjectCompliance::findOrFail($id);
+        $user = Auth::user();
+        
+        // Determine which approval level based on user role
+        if ($user->role->name === 'Program Head') {
+            $compliance->update([
+                'program_head_approval_status' => 'approved',
+                'program_head_comments' => $request->comments,
+                'program_head_approved_by' => $user->id,
+                'program_head_approved_at' => now(),
+            ]);
+        } elseif ($user->role->name === 'Dean') {
+            $compliance->update([
+                'dean_approval_status' => 'approved',
+                'dean_comments' => $request->comments,
+                'dean_approved_by' => $user->id,
+                'dean_approved_at' => now(),
+            ]);
+        } else {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        // Update overall approval status if both levels approved
+        if ($compliance->program_head_approval_status === 'approved' && $compliance->dean_approval_status === 'approved') {
+            $compliance->update(['approval_status' => 'approved']);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Subject compliance approved successfully'
+        ]);
+    }
+
+    /**
+     * Reject subject compliance (needs revision)
+     */
+    public function rejectSubjectCompliance(Request $request, $id)
+    {
+        $request->validate([
+            'comments' => 'required|string|max:500'
+        ]);
+
+        $compliance = SubjectCompliance::findOrFail($id);
+        $user = Auth::user();
+        
+        // Determine which approval level based on user role
+        if ($user->role->name === 'Program Head') {
+            $compliance->update([
+                'program_head_approval_status' => 'needs_revision',
+                'program_head_comments' => $request->comments,
+                'program_head_approved_by' => $user->id,
+                'program_head_approved_at' => now(),
+                'approval_status' => 'needs_revision'
+            ]);
+        } elseif ($user->role->name === 'Dean') {
+            $compliance->update([
+                'dean_approval_status' => 'needs_revision',
+                'dean_comments' => $request->comments,
+                'dean_approved_by' => $user->id,
+                'dean_approved_at' => now(),
+                'approval_status' => 'needs_revision'
+            ]);
+        } else {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Subject compliance marked for revision'
+        ]);
     }
 }

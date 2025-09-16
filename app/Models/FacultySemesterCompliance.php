@@ -15,19 +15,24 @@ class FacultySemesterCompliance extends Model
         'document_type_id',
         'semester_id',
         'evidence_link',
+        'evidence_description',
         'self_evaluation_status',
         'approval_status',
-        'approved_by',
-        'approved_at',
-        'review_comments',
         'program_head_approval_status',
-        'program_head_approved_by',
-        'program_head_approved_at',
-        'program_head_comments',
         'dean_approval_status',
+        'program_head_comments',
+        'dean_comments',
+        'program_head_approved_by',
         'dean_approved_by',
+        'program_head_approved_at',
         'dean_approved_at',
-        'dean_comments'
+        'submitted_at',
+    ];
+
+    protected $casts = [
+        'submitted_at' => 'datetime',
+        'program_head_approved_at' => 'datetime',
+        'dean_approved_at' => 'datetime',
     ];
 
     /**
@@ -55,7 +60,7 @@ class FacultySemesterCompliance extends Model
     }
 
     /**
-     * Get the program head who approved this compliance.
+     * Get the program head approver.
      */
     public function programHeadApprover(): BelongsTo
     {
@@ -63,26 +68,10 @@ class FacultySemesterCompliance extends Model
     }
 
     /**
-     * Get the dean who approved this compliance.
+     * Get the dean approver.
      */
     public function deanApprover(): BelongsTo
     {
         return $this->belongsTo(User::class, 'dean_approved_by');
-    }
-
-    /**
-     * Check if the compliance has evidence link.
-     */
-    public function hasEvidenceLink(): bool
-    {
-        return !empty($this->evidence_link);
-    }
-
-    /**
-     * Get the display status for evidence.
-     */
-    public function getEvidenceStatusAttribute(): string
-    {
-        return $this->hasEvidenceLink() ? 'link' : 'required';
     }
 }
