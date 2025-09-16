@@ -92,6 +92,31 @@ class DashboardController extends Controller
                 $query->where('department_id', $user->department_id);
             })->get());
 
+        // Get program analytics for the dean's department
+        $programs = \App\Models\Program::where('department_id', $user->department_id)->get();
+        $programAnalytics = [];
+
+        foreach ($programs as $program) {
+            // Get faculty assigned to subjects in this program through FacultyAssignments
+            $facultyInProgram = \App\Models\FacultyAssignment::whereHas('subject', function($query) use ($program) {
+                $query->where('program_id', $program->id);
+            })->pluck('user_id')->unique();
+
+            // Get compliances from faculty assigned to this program
+            $programSubmissions = collect()
+                ->merge(FacultySemesterCompliance::whereIn('user_id', $facultyInProgram)->get())
+                ->merge(SubjectCompliance::whereIn('user_id', $facultyInProgram)->get());
+
+            $programAnalytics[] = [
+                'program_name' => $program->name,
+                'program_code' => $program->code,
+                'total_submissions' => $programSubmissions->count(),
+                'approved_submissions' => $programSubmissions->where('approval_status', 'approved')->count(),
+                'pending_submissions' => $programSubmissions->where('approval_status', 'pending')->count(),
+                'needs_revision_submissions' => $programSubmissions->where('approval_status', 'needs_revision')->count(),
+            ];
+        }
+
         return [
             'department_submissions' => $departmentSubmissions->count(),
             'pending_submissions' => $departmentSubmissions->where('approval_status', 'pending')->count(),
@@ -100,6 +125,7 @@ class DashboardController extends Controller
                                       $query->where('name', 'Faculty');
                                   })->count(),
             'active_semester' => Semester::where('is_active', true)->first(),
+            'program_analytics' => $programAnalytics,
         ];
     }
 

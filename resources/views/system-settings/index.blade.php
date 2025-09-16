@@ -73,53 +73,6 @@
                 </div>
             </div>
 
-            <!-- Quick Actions -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0">Quick Actions</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-3">
-                                    <a href="{{ route('settings.semesters') }}" class="btn btn-outline-primary w-100 mb-3">
-                                        <i class="fas fa-calendar-alt fa-2x d-block mb-2"></i>
-                                        Manage Semesters
-                                    </a>
-                                </div>
-                                <div class="col-md-3">
-                                    <a href="{{ route('settings.document-types') }}" class="btn btn-outline-success w-100 mb-3">
-                                        <i class="fas fa-file-alt fa-2x d-block mb-2"></i>
-                                        Document Types
-                                    </a>
-                                </div>
-                                <div class="col-md-3">
-                                    <a href="{{ route('users.index') }}" class="btn btn-outline-info w-100 mb-3">
-                                        <i class="fas fa-users-cog fa-2x d-block mb-2"></i>
-                                        User Management
-                                    </a>
-                                </div>
-                                <div class="col-md-3">
-                                    <a href="{{ route('departments.index') }}" class="btn btn-outline-warning w-100 mb-3">
-                                        <i class="fas fa-building fa-2x d-block mb-2"></i>
-                                        Departments
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-3">
-                                    <a href="{{ route('settings.user-logs') }}" class="btn btn-outline-secondary w-100 mb-3">
-                                        <i class="fas fa-history fa-2x d-block mb-2"></i>
-                                        User Activity Logs
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Current Semester Info -->
             <div class="row">
                 <div class="col-md-6">

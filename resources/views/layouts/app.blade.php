@@ -274,7 +274,12 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('settings.*') ? 'active' : '' }}" href="{{ route('settings.index') }}">
+                            <a class="nav-link {{ request()->routeIs('settings.semesters*') ? 'active' : '' }}" href="{{ route('settings.semesters') }}">
+                                <i class="fas fa-calendar-alt me-2"></i>Semester Settings
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('settings.*') && !request()->routeIs('settings.semesters*') ? 'active' : '' }}" href="{{ route('settings.index') }}">
                                 <i class="fas fa-cogs me-2"></i>System Settings
                             </a>
                         </li>

@@ -8,9 +8,11 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2><i class="fas fa-book me-2"></i>Subject Management</h2>
-                <a href="{{ route('subjects.create') }}" class="btn btn-primary">
-                    <i class="fas fa-plus me-2"></i>Add Subject
-                </a>
+                @if($user->role->name !== 'Program Head')
+                    <a href="{{ route('subjects.create') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Add Subject
+                    </a>
+                @endif
             </div>
 
             @if(session('success'))
@@ -136,8 +138,10 @@
                                     <th>Year Level</th>
                                     <th>Semester</th>
                                     <th>Units</th>
-                                    <th>Assigned Faculty</th>
-                                    <th>Status</th>
+                                    @if($user->role->name !== 'Program Head')
+                                        <th>Assigned Faculty</th>
+                                        <th>Status</th>
+                                    @endif
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -154,47 +158,56 @@
                                     </td>
                                     <td>{{ $subject->semester ?? 'N/A' }}</td>
                                     <td>{{ $subject->units ?? 0 }}</td>
-                                    <td>
-                                        @if($subject->faculty)
-                                            <div class="d-flex align-items-center">
-                                                <div class="avatar-sm bg-light rounded-circle me-2 d-flex align-items-center justify-content-center">
-                                                    <i class="fas fa-user text-muted"></i>
-                                                </div>
-                                                <div>
-                                                    <small class="fw-bold">{{ $subject->faculty->name }}</small><br>
-                                                    <small class="text-muted">{{ $subject->faculty->email }}</small>
-                                                </div>
-                                            </div>
-                                        @else
-                                            <span class="text-muted">Unassigned</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if($subject->is_active)
-                                            <span class="badge bg-success">Active</span>
-                                        @else
-                                            <span class="badge bg-secondary">Inactive</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <a href="{{ route('subjects.show', $subject) }}" class="btn btn-sm btn-outline-primary" title="View Details">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                            <a href="{{ route('subjects.edit', $subject) }}" class="btn btn-sm btn-outline-secondary" title="Edit">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            @if(!$subject->faculty)
-                                            <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#assignModal{{ $subject->id }}" title="Assign Faculty">
-                                                <i class="fas fa-user-plus"></i>
-                                            </button>
+                                    @if($user->role->name !== 'Program Head')
+                                        <td>
+                                            @if($subject->facultyAssignments->isNotEmpty())
+                                                @foreach($subject->facultyAssignments as $assignment)
+                                                    <div class="d-flex align-items-center mb-1">
+                                                        <div class="avatar-sm bg-light rounded-circle me-2 d-flex align-items-center justify-content-center">
+                                                            <i class="fas fa-user text-muted"></i>
+                                                        </div>
+                                                        <div>
+                                                            <small class="fw-bold">{{ $assignment->user->name }}</small><br>
+                                                            <small class="text-muted">{{ $assignment->user->email }}</small>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            @else
+                                                <span class="text-muted">Unassigned</span>
                                             @endif
-                                        </div>
+                                        </td>
+                                        <td>
+                                            @if($subject->is_active)
+                                                <span class="badge bg-success">Active</span>
+                                            @else
+                                                <span class="badge bg-secondary">Inactive</span>
+                                            @endif
+                                        </td>
+                                    @endif
+                                    <td>
+                                        @if($user->role->name === 'Program Head')
+                                            <!-- Program Head only sees Assign Faculty button -->
+                                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#assignModal{{ $subject->id }}" title="Assign Faculty">
+                                                <i class="fas fa-user-plus me-1"></i>Assign Faculty
+                                            </button>
+                                        @else
+                                            <!-- Other roles see all actions -->
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ route('subjects.show', $subject) }}" class="btn btn-sm btn-outline-primary" title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{{ route('subjects.edit', $subject) }}" class="btn btn-sm btn-outline-secondary" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#assignModal{{ $subject->id }}" title="Assign Faculty">
+                                                    <i class="fas fa-user-plus"></i>
+                                                </button>
+                                            </div>
+                                        @endif
                                     </td>
                                 </tr>
 
                                 <!-- Assignment Modal -->
-                                @if(!$subject->faculty)
                                 <div class="modal fade" id="assignModal{{ $subject->id }}" tabindex="-1">
                                     <div class="modal-dialog">
                                         <div class="modal-content">
@@ -210,9 +223,15 @@
                                                         <select class="form-select" id="faculty_id{{ $subject->id }}" name="faculty_id" required>
                                                             <option value="">Choose faculty member...</option>
                                                             @foreach($availableFaculty ?? [] as $faculty)
-                                                            <option value="{{ $faculty->id }}">{{ $faculty->name }} ({{ $faculty->email }})</option>
+                                                                <option value="{{ $faculty->id }}">{{ $faculty->name }} ({{ $faculty->email }})</option>
                                                             @endforeach
                                                         </select>
+                                                        @if($user->role->name === 'Program Head')
+                                                            <div class="form-text">
+                                                                <i class="fas fa-info-circle me-1"></i>
+                                                                Only faculty members assigned to your program are shown.
+                                                            </div>
+                                                        @endif
                                                     </div>
                                                 </div>
                                                 <div class="modal-footer">
@@ -223,11 +242,10 @@
                                         </div>
                                     </div>
                                 </div>
-                                @endif
 
                                 @empty
                                 <tr>
-                                    <td colspan="9" class="text-center text-muted py-4">
+                                    <td colspan="{{ $user->role->name === 'Program Head' ? '7' : '9' }}" class="text-center text-muted py-4">
                                         <i class="fas fa-book fa-3x mb-3 d-block"></i>
                                         No subjects found.
                                     </td>

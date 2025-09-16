@@ -114,53 +114,8 @@
 </div>
 
 <div class="row">
-    <!-- Quick Actions -->
-    <div class="col-lg-4 mb-4">
-        <div class="card h-100">
-            <div class="card-header bg-primary text-white">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-bolt me-2"></i>
-                    Quick Actions
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <div class="dropdown">
-                        <button class="btn btn-primary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-upload me-2"></i>
-                            Submit New Document
-                        </button>
-                        <ul class="dropdown-menu w-100">
-                            @forelse($dashboardData['document_types'] ?? [] as $docType)
-                            <li>
-                                <a class="dropdown-item" href="{{ route('compliance.create', ['document_type_id' => $docType->id]) }}">
-                                    <i class="fas fa-file me-2"></i>{{ $docType->name }}
-                                </a>
-                            </li>
-                            @empty
-                            <li><span class="dropdown-item text-muted">No document types available</span></li>
-                            @endforelse
-                        </ul>
-                    </div>
-                    <a href="{{ route('compliance.my-submissions') }}" class="btn btn-outline-primary">
-                        <i class="fas fa-list me-2"></i>
-                        View My Submissions
-                    </a>
-                    <button class="btn btn-outline-secondary" onclick="showDeadlines()">
-                        <i class="fas fa-calendar me-2"></i>
-                        View Deadlines
-                    </button>
-                    <a href="{{ route('profile.show') }}" class="btn btn-outline-info">
-                        <i class="fas fa-user me-2"></i>
-                        Update Profile
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Recent Submissions -->
-    <div class="col-lg-4 mb-4">
+    <div class="col-lg-6 mb-4">
         <div class="card h-100">
             <div class="card-header bg-success text-white">
                 <h5 class="card-title mb-0">

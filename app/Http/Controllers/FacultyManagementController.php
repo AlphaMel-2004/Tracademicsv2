@@ -435,7 +435,6 @@ class FacultyManagementController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:8|confirmed',
-            'employee_id' => 'required|string|unique:users,employee_id',
         ]);
         
         try {
@@ -450,7 +449,6 @@ class FacultyManagementController extends Controller
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => bcrypt($request->password),
-                'employee_id' => $request->employee_id,
                 'role_id' => $facultyRole->id,
                 'department_id' => $user->department_id, // Same department as Program Head
                 'program_id' => null, // Faculty users don't have direct program assignment
@@ -474,7 +472,6 @@ class FacultyManagementController extends Controller
                     'id' => $faculty->id,
                     'name' => $faculty->name,
                     'email' => $faculty->email,
-                    'employee_id' => $faculty->employee_id,
                 ]
             ]);
             

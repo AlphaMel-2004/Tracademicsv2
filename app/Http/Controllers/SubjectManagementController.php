@@ -25,7 +25,12 @@ class SubjectManagementController extends Controller
             abort(403, 'Unauthorized access');
         }
         
-    $query = Subject::with(['program', 'facultyAssignments.user']);
+        $query = Subject::with(['program', 'facultyAssignments.user']);
+        
+        // For Program Heads, filter to show only subjects from their program
+        if ($user->role->name === 'Program Head' && $user->program_id) {
+            $query->where('program_id', $user->program_id);
+        }
         
         // Apply filters
         if ($request->filled('search')) {
@@ -46,21 +51,58 @@ class SubjectManagementController extends Controller
         $subjects = $query->paginate(15);
         
         // Get programs for filter dropdown
-        $programs = Program::all();
+        if ($user->role->name === 'Program Head' && $user->program_id) {
+            // Program Heads only see their own program
+            $programs = Program::where('id', $user->program_id)->get();
+        } else {
+            $programs = Program::all();
+        }
         
         // Get available faculty for assignment
-        $availableFaculty = User::whereHas('role', function($query) {
-            $query->where('name', 'Faculty');
-        })->get();
+        if ($user->role->name === 'Program Head' && $user->program_id) {
+            // For Program Heads: Only show faculty from their program
+            // First, get all faculty assigned to subjects in this program
+            $programFacultyIds = FacultyAssignment::whereHas('subject', function($query) use ($user) {
+                $query->where('program_id', $user->program_id);
+            })->pluck('user_id')->unique();
+            
+            // Get the faculty users
+            $availableFaculty = User::whereHas('role', function($query) {
+                $query->where('name', 'Faculty');
+            })->whereIn('id', $programFacultyIds)->get();
+            
+            // If no faculty assigned to program yet, show all faculty for initial assignments
+            if ($availableFaculty->isEmpty()) {
+                $availableFaculty = User::whereHas('role', function($query) {
+                    $query->where('name', 'Faculty');
+                })->where('department_id', $user->department_id)->get();
+            }
+        } else {
+            // For higher roles: Show all faculty
+            $availableFaculty = User::whereHas('role', function($query) {
+                $query->where('name', 'Faculty');
+            })->get();
+        }
         
         // Calculate statistics
+        $statsQuery = $user->role->name === 'Program Head' && $user->program_id ? 
+            Subject::where('program_id', $user->program_id) : Subject::query();
+            
         $stats = [
-            'total' => Subject::count(),
-            'assigned' => DB::table('faculty_assignments')->distinct('subject_id')->count('subject_id'),
-            'unassigned' => Subject::count() - DB::table('faculty_assignments')->distinct('subject_id')->count('subject_id')
+            'total' => $statsQuery->count(),
+            'assigned' => DB::table('faculty_assignments')
+                ->join('subjects', 'faculty_assignments.subject_id', '=', 'subjects.id')
+                ->when($user->role->name === 'Program Head' && $user->program_id, function($q) use ($user) {
+                    return $q->where('subjects.program_id', $user->program_id);
+                })
+                ->distinct('subject_id')
+                ->count('subject_id'),
+            'unassigned' => 0 // Will be calculated below
         ];
         
-        return view('subjects.index', compact('subjects', 'programs', 'availableFaculty', 'stats'));
+        $stats['unassigned'] = $stats['total'] - $stats['assigned'];
+        
+        return view('subjects.index', compact('subjects', 'programs', 'availableFaculty', 'stats', 'user'));
     }
 
     /**

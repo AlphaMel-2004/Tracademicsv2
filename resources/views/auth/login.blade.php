@@ -82,8 +82,12 @@
                         required 
                         autocomplete="current-password"
                         placeholder="Enter your password"
-                        style="border-radius: 8px; background-color: #f8f9fa;"
+                        style="border-radius: 8px; background-color: #f8f9fa; padding-right: 45px;"
                     >
+                    <button type="button" class="btn btn-link position-absolute" id="togglePassword" 
+                            style="top: 50%; right: 10px; transform: translateY(-50%); border: none; background: none; color: #6c757d; z-index: 10;">
+                        <i class="fas fa-eye" id="togglePasswordIcon"></i>
+                    </button>
                 </div>
                 @error('password')
                     <div class="invalid-feedback d-block">
@@ -223,6 +227,25 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.querySelector('form[method="POST"]');
     const usernameInput = document.getElementById('username');
     const emailInput = document.getElementById('email');
+    
+    // Password toggle functionality
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    const toggleIcon = document.getElementById('togglePasswordIcon');
+    
+    if (togglePassword && passwordInput && toggleIcon) {
+        togglePassword.addEventListener('click', function() {
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        });
+    }
     
     form.addEventListener('submit', function(e) {
         const username = usernameInput.value.trim();

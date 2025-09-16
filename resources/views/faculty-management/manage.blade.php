@@ -176,13 +176,6 @@
                                 <input type="text" class="form-control" id="faculty_name" name="name" required>
                                 <div class="invalid-feedback"></div>
                             </div>
-                            
-                            <div class="mb-3">
-                                <label class="form-label">Employee ID <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="faculty_employee_id" name="employee_id" required>
-                                <div class="invalid-feedback"></div>
-                                <div class="form-text">Unique employee identification number</div>
-                            </div>
                         </div>
                         
                         <!-- Account Information -->
