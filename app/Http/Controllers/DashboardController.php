@@ -164,17 +164,65 @@ class DashboardController extends Controller
      */
     private function getProgramHeadData(User $user)
     {
-        // Get submissions from faculty in the same department
-        $programSubmissions = collect()
-            ->merge(FacultySemesterCompliance::whereHas('user', function ($query) use ($user) {
-                $query->where('department_id', $user->department_id);
-            })->get())
-            ->merge(SubjectCompliance::whereHas('user', function ($query) use ($user) {
-                $query->where('department_id', $user->department_id);
-            })->get());
+        if (!$user->program_id) {
+            return [
+                'faculty_submitted_documents' => 0,
+                'faculty_assigned' => 0,
+                'program_subjects' => 0,
+                'pending_approvals' => 0,
+                'approved_submissions' => 0,
+                'needs_revision' => 0,
+                'compliance_analytics' => [],
+                'active_semester' => Semester::where('is_active', true)->first(),
+            ];
+        }
+
+        // Get faculty assigned to this program head's program
+        $facultyInProgram = \App\Models\FacultyAssignment::where('program_id', $user->program_id)
+            ->pluck('user_id')
+            ->unique();
+
+        // Get all compliance submissions from faculty in this program
+        $semesterCompliances = FacultySemesterCompliance::whereIn('user_id', $facultyInProgram)->get();
+        $subjectCompliances = SubjectCompliance::whereIn('user_id', $facultyInProgram)->get();
+        $allCompliances = $semesterCompliances->merge($subjectCompliances);
+
+        // Get subjects in this program
+        $programSubjects = \App\Models\Subject::where('program_id', $user->program_id)->count();
+
+        // Get unique faculty count assigned to this program
+        $facultyAssigned = $facultyInProgram->count();
+
+        // Get compliance analytics
+        $complianceAnalytics = [
+            'pending' => $allCompliances->where('program_head_approval_status', 'pending')->count(),
+            'approved' => $allCompliances->where('program_head_approval_status', 'approved')->count(),
+            'needs_revision' => $allCompliances->where('program_head_approval_status', 'needs_revision')->count(),
+        ];
+
+        // Calculate monthly compliance trend (last 6 months)
+        $monthlyTrend = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $monthSubmissions = $allCompliances->filter(function($compliance) use ($month) {
+                return $compliance->created_at && $compliance->created_at->format('Y-m') === $month->format('Y-m');
+            })->count();
+            
+            $monthlyTrend[] = [
+                'month' => $month->format('M Y'),
+                'submissions' => $monthSubmissions
+            ];
+        }
 
         return [
-            'program_submissions' => $programSubmissions->count(),
+            'faculty_submitted_documents' => $allCompliances->count(),
+            'faculty_assigned' => $facultyAssigned,
+            'program_subjects' => $programSubjects,
+            'pending_approvals' => $complianceAnalytics['pending'],
+            'approved_submissions' => $complianceAnalytics['approved'],
+            'needs_revision' => $complianceAnalytics['needs_revision'],
+            'compliance_analytics' => $complianceAnalytics,
+            'monthly_trend' => $monthlyTrend,
             'active_semester' => Semester::where('is_active', true)->first(),
         ];
     }

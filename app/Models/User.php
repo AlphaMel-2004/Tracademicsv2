@@ -29,6 +29,7 @@ class User extends Authenticatable
         'department_id',
         'program_id',
         'last_login_at',
+        'is_active',
     ];
 
     /**

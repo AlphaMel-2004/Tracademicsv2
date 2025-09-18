@@ -117,14 +117,19 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <div class="btn-group" role="group">
-                                        <a href="{{ route('faculty.show', $faculty) }}" class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-eye"></i> View
-                                        </a>
-                                        <a href="{{ route('faculty.assignments', $faculty) }}" class="btn btn-sm btn-outline-info">
-                                            <i class="fas fa-tasks"></i> Assignments
-                                        </a>
-                                    </div>
+                                    @if($faculty->is_active ?? true)
+                                        <button class="btn btn-sm btn-danger" 
+                                                onclick="toggleFacultyStatus({{ $faculty->id }}, 'deactivate')"
+                                                title="Deactivate Faculty">
+                                            <i class="fas fa-user-times me-1"></i>Deactivate
+                                        </button>
+                                    @else
+                                        <button class="btn btn-sm btn-success" 
+                                                onclick="toggleFacultyStatus({{ $faculty->id }}, 'reactivate')"
+                                                title="Reactivate Faculty">
+                                            <i class="fas fa-user-check me-1"></i>Reactivate
+                                        </button>
+                                    @endif
                                 </td>
                             </tr>
                             @endforeach
@@ -328,6 +333,65 @@ function showToast(message, type = 'info') {
     
     toastElement.addEventListener('hidden.bs.toast', () => {
         toastElement.remove();
+    });
+}
+
+/**
+ * Toggle faculty activation status
+ */
+function toggleFacultyStatus(facultyId, action) {
+    const actionText = action === 'deactivate' ? 'deactivate' : 'reactivate';
+    const confirmText = action === 'deactivate' ? 
+        'Are you sure you want to deactivate this faculty member? They will not be able to log in.' :
+        'Are you sure you want to reactivate this faculty member? They will be able to log in again.';
+    
+    if (!confirm(confirmText)) {
+        return;
+    }
+    
+    const button = event.target.closest('button');
+    const originalHtml = button.innerHTML;
+    
+    // Disable button and show loading
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Processing...';
+    
+    fetch(`{{ url('faculty-management') }}/${facultyId}/toggle-status`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            faculty_id: facultyId,
+            action: action
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            // Reload the page to reflect changes
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            throw new Error(data.message || 'Operation failed');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Error: ' + error.message, 'error');
+        
+        // Restore button
+        button.disabled = false;
+        button.innerHTML = originalHtml;
     });
 }
 </script>

@@ -83,6 +83,7 @@ Route::middleware(['auth'])->group(function () {
         // Program Head Faculty Management routes (must be before dynamic routes)
         Route::get('/manage', [FacultyManagementController::class, 'manageFaculty'])->name('manage');
         Route::post('/register', [FacultyManagementController::class, 'registerFaculty'])->name('register');
+        Route::post('/{faculty}/toggle-status', [FacultyManagementController::class, 'toggleStatus'])->name('toggle-status');
         
         Route::get('/{faculty}', [FacultyManagementController::class, 'show'])->name('show');
         Route::get('/{faculty}/edit', [FacultyManagementController::class, 'edit'])->name('edit');

@@ -481,4 +481,48 @@ class FacultyManagementController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Toggle the active status of a faculty member
+     */
+    public function toggleStatus(Request $request, User $faculty)
+    {
+        try {
+            $user = Auth::user();
+            
+            // Only Program Heads and above can toggle faculty status
+            if (!in_array($user->role->name, ['Program Head', 'Dean', 'VPAA', 'MIS'])) {
+                return response()->json(['error' => 'Unauthorized access'], 403);
+            }
+            
+            // Ensure the user being toggled is a faculty member
+            if ($faculty->role->name !== 'Faculty') {
+                return response()->json(['error' => 'Can only toggle faculty member status'], 400);
+            }
+            
+            // For Program Heads, ensure they can only manage faculty in their program
+            if ($user->role->name === 'Program Head') {
+                if ($faculty->program_id !== $user->program_id) {
+                    return response()->json(['error' => 'You can only manage faculty in your program'], 403);
+                }
+            }
+            
+            // Toggle the status
+            $faculty->is_active = !$faculty->is_active;
+            $faculty->save();
+            
+            $status = $faculty->is_active ? 'activated' : 'deactivated';
+            
+            return response()->json([
+                'success' => true,
+                'message' => "Faculty member {$status} successfully",
+                'is_active' => $faculty->is_active
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Error updating faculty status: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
