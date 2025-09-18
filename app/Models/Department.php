@@ -14,7 +14,24 @@ class Department extends Model
         'name',
         'code',
         'description',
+        'is_active',
     ];
+
+    /**
+     * Scope to get only active departments
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    /**
+     * Scope to get inactive departments
+     */
+    public function scopeInactive($query)
+    {
+        return $query->where('is_active', false);
+    }
 
     /**
      * Get the programs for the department.

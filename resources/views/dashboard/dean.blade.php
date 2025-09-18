@@ -92,18 +92,8 @@
                 </div>
             </div>
             <div class="card-body p-4" style="min-height: 400px;">
-                <!-- Loading State -->
-                <div id="chartLoading" class="d-flex justify-content-center align-items-center" style="height: 300px;">
-                    <div class="text-center">
-                        <div class="spinner-border text-primary mb-3" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <p class="text-muted">Loading program analytics...</p>
-                    </div>
-                </div>
-                
                 <!-- Chart Container -->
-                <div id="chartContainer" style="display: none;">
+                <div id="chartContainer">
                     <canvas id="programAnalyticsChart" width="400" height="300"></canvas>
                 </div>
                 
@@ -155,24 +145,17 @@ let currentChartType = 'bar';
 let animationEnabled = true;
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Show loading state initially
-    setTimeout(() => {
-        initializeChart();
-    }, 800); // Simulate loading time for better UX
+    initializeChart();
 });
 
 function initializeChart() {
     const programData = @json($dashboardData['program_analytics'] ?? []);
-    
-    // Hide loading and show appropriate content
-    document.getElementById('chartLoading').style.display = 'none';
     
     if (programData.length === 0 || programData.every(item => item.total_submissions === 0)) {
         document.getElementById('emptyState').style.display = 'block';
         return;
     }
     
-    document.getElementById('chartContainer').style.display = 'block';
     document.getElementById('chartSummary').style.display = 'block';
     
     // Update summary statistics
@@ -478,7 +461,7 @@ function toggleChartAnimation() {
 }
 
 function exportChart() {
-    const url = chartInstance.toBase64Image();
+    const url = chartInstance.toBase64Image('image/png', 1.0, '#ffffff');
     const link = document.createElement('a');
     link.download = 'program-analytics-chart.png';
     link.href = url;

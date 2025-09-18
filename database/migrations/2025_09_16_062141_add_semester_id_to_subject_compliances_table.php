@@ -12,8 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('subject_compliances', function (Blueprint $table) {
-            // Add semester_id column and foreign key constraint
-            $table->foreignId('semester_id')->after('document_type_id')->constrained()->onDelete('cascade');
+            // Add semester_id column only if it doesn't exist
+            if (!Schema::hasColumn('subject_compliances', 'semester_id')) {
+                $table->foreignId('semester_id')->after('document_type_id')->constrained()->onDelete('cascade');
+            }
         });
     }
 

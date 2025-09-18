@@ -71,11 +71,41 @@ class DashboardController extends Controller
      */
     private function getVPAAData()
     {
+        // Get all departments with their compliance analytics
+        $departments = \App\Models\Department::all();
+        $departmentAnalytics = [];
+
+        foreach ($departments as $department) {
+            // Get all compliances from faculty in this department
+            $departmentSubmissions = collect()
+                ->merge(FacultySemesterCompliance::whereHas('user', function ($query) use ($department) {
+                    $query->where('department_id', $department->id);
+                })->get())
+                ->merge(SubjectCompliance::whereHas('user', function ($query) use ($department) {
+                    $query->where('department_id', $department->id);
+                })->get());
+
+            $departmentAnalytics[] = [
+                'department_name' => $department->name,
+                'department_code' => $department->code,
+                'total_submissions' => $departmentSubmissions->count(),
+                'approved_submissions' => $departmentSubmissions->where('approval_status', 'approved')->count(),
+                'pending_submissions' => $departmentSubmissions->where('approval_status', 'pending')->count(),
+                'needs_revision_submissions' => $departmentSubmissions->where('approval_status', 'needs_revision')->count(),
+                'submitted_submissions' => $departmentSubmissions->where('approval_status', 'submitted')->count(),
+                'faculty_count' => User::where('department_id', $department->id)
+                                      ->whereHas('role', function($query) {
+                                          $query->where('name', 'Faculty');
+                                      })->count(),
+            ];
+        }
+
         return [
             'total_submissions' => FacultySemesterCompliance::count() + SubjectCompliance::count(),
             'pending_reviews' => FacultySemesterCompliance::where('approval_status', 'submitted')->count() + SubjectCompliance::where('approval_status', 'submitted')->count(),
             'compliance_rate' => $this->calculateComplianceRate(),
             'active_semester' => Semester::where('is_active', true)->first(),
+            'department_analytics' => $departmentAnalytics,
         ];
     }
 

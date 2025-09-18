@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use App\Models\User;
 use App\Models\Department;
 use App\Models\Program;
@@ -542,41 +543,89 @@ class MonitorController extends Controller
      */
     public function approveSemesterCompliance(Request $request, $id)
     {
-        $request->validate([
-            'comments' => 'nullable|string|max:500'
-        ]);
-
-        $compliance = FacultySemesterCompliance::findOrFail($id);
-        $user = Auth::user();
-        
-        // Determine which approval level based on user role
-        if ($user->role->name === 'Program Head') {
-            $compliance->update([
-                'program_head_approval_status' => 'approved',
-                'program_head_comments' => $request->comments,
-                'program_head_approved_by' => $user->id,
-                'program_head_approved_at' => now(),
+        try {
+            $request->validate([
+                'comments' => 'nullable|string|max:500'
             ]);
-        } elseif ($user->role->name === 'Dean') {
-            $compliance->update([
-                'dean_approval_status' => 'approved',
-                'dean_comments' => $request->comments,
-                'dean_approved_by' => $user->id,
-                'dean_approved_at' => now(),
+
+            $compliance = FacultySemesterCompliance::findOrFail($id);
+            $user = Auth::user();
+            
+            // Log for debugging
+            Log::info('Approving semester compliance', [
+                'user_id' => $user->id,
+                'user_role' => $user->role->name,
+                'compliance_id' => $id,
+                'comments' => $request->comments,
+                'compliance_user_id' => $compliance->user_id,
+                'user_program_id' => $user->program_id ?? null,
+                'user_dept_id' => $user->department_id ?? null,
+                'faculty_user_dept_id' => $compliance->user->department_id ?? null
             ]);
-        } else {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
+            
+            // Check permissions
+            if ($user->role->name === 'Program Head') {
+                // Check if the faculty user is assigned to the Program Head's program
+                if (!$user->program_id) {
+                    return response()->json(['error' => 'Program Head not assigned to a program'], 403);
+                }
+                
+                // Check if the faculty is assigned to this program head's program
+                $facultyProgramIds = $compliance->user->facultyAssignments()->pluck('program_id')->toArray();
+                if (!in_array($user->program_id, $facultyProgramIds)) {
+                    return response()->json(['error' => 'You can only approve compliance for faculty in your program'], 403);
+                }
+                
+                $compliance->update([
+                    'program_head_approval_status' => 'approved',
+                    'comments' => $request->comments,
+                    'program_head_approved_by' => $user->id,
+                    'program_head_approved_at' => now(),
+                ]);
+                
+            } elseif ($user->role->name === 'Dean') {
+                // Check if the faculty user is in the Dean's department
+                if (!$user->department_id) {
+                    return response()->json(['error' => 'Dean not assigned to a department'], 403);
+                }
+                
+                if ($compliance->user->department_id !== $user->department_id) {
+                    return response()->json(['error' => 'You can only approve compliance for faculty in your department'], 403);
+                }
+                
+                $compliance->update([
+                    'dean_approval_status' => 'approved',
+                    'comments' => $request->comments,
+                    'dean_approved_by' => $user->id,
+                    'dean_approved_at' => now(),
+                ]);
+            } else {
+                return response()->json(['error' => 'Unauthorized - Invalid role: ' . $user->role->name], 403);
+            }
 
-        // Update overall approval status if both levels approved
-        if ($compliance->program_head_approval_status === 'approved' && $compliance->dean_approval_status === 'approved') {
-            $compliance->update(['approval_status' => 'approved']);
-        }
+            // Update overall approval status if both levels approved
+            if ($compliance->program_head_approval_status === 'approved' && $compliance->dean_approval_status === 'approved') {
+                $compliance->update(['approval_status' => 'approved']);
+            }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Semester compliance approved successfully'
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Semester compliance approved successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error approving semester compliance', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user_id' => Auth::id(),
+                'compliance_id' => $id
+            ]);
+            
+            return response()->json([
+                'error' => 'Error processing request: ' . $e->getMessage(),
+                'success' => false
+            ], 500);
+        }
     }
 
     /**
@@ -584,38 +633,85 @@ class MonitorController extends Controller
      */
     public function rejectSemesterCompliance(Request $request, $id)
     {
-        $request->validate([
-            'comments' => 'required|string|max:500'
-        ]);
+        try {
+            $request->validate([
+                'comments' => 'required|string|max:500'
+            ]);
 
-        $compliance = FacultySemesterCompliance::findOrFail($id);
-        $user = Auth::user();
-        
-        // Determine which approval level based on user role
-        if ($user->role->name === 'Program Head') {
-            $compliance->update([
-                'program_head_approval_status' => 'needs_revision',
-                'program_head_comments' => $request->comments,
-                'program_head_approved_by' => $user->id,
-                'program_head_approved_at' => now(),
-                'approval_status' => 'needs_revision'
+            $compliance = FacultySemesterCompliance::findOrFail($id);
+            $user = Auth::user();
+            
+            // Log for debugging
+            Log::info('Rejecting semester compliance', [
+                'user_id' => $user->id,
+                'user_role' => $user->role->name,
+                'compliance_id' => $id,
+                'comments' => $request->comments,
+                'compliance_user_id' => $compliance->user_id,
+                'user_program_id' => $user->program_id ?? null,
+                'user_dept_id' => $user->department_id ?? null
             ]);
-        } elseif ($user->role->name === 'Dean') {
-            $compliance->update([
-                'dean_approval_status' => 'needs_revision',
-                'dean_comments' => $request->comments,
-                'dean_approved_by' => $user->id,
-                'dean_approved_at' => now(),
-                'approval_status' => 'needs_revision'
+            
+            // Check permissions
+            if ($user->role->name === 'Program Head') {
+                // Check if the faculty user is assigned to the Program Head's program
+                if (!$user->program_id) {
+                    return response()->json(['error' => 'Program Head not assigned to a program'], 403);
+                }
+                
+                // Check if the faculty is assigned to this program head's program
+                $facultyProgramIds = $compliance->user->facultyAssignments()->pluck('program_id')->toArray();
+                if (!in_array($user->program_id, $facultyProgramIds)) {
+                    return response()->json(['error' => 'You can only approve compliance for faculty in your program'], 403);
+                }
+                
+                $compliance->update([
+                    'program_head_approval_status' => 'needs_revision',
+                    'comments' => $request->comments,
+                    'program_head_approved_by' => $user->id,
+                    'program_head_approved_at' => now(),
+                    'approval_status' => 'needs_revision'
+                ]);
+                
+            } elseif ($user->role->name === 'Dean') {
+                // Check if the faculty user is in the Dean's department
+                if (!$user->department_id) {
+                    return response()->json(['error' => 'Dean not assigned to a department'], 403);
+                }
+                
+                if ($compliance->user->department_id !== $user->department_id) {
+                    return response()->json(['error' => 'You can only approve compliance for faculty in your department'], 403);
+                }
+                
+                $compliance->update([
+                    'dean_approval_status' => 'needs_revision',
+                    'comments' => $request->comments,
+                    'dean_approved_by' => $user->id,
+                    'dean_approved_at' => now(),
+                    'approval_status' => 'needs_revision'
+                ]);
+            } else {
+                return response()->json(['error' => 'Unauthorized - Invalid role: ' . $user->role->name], 403);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Semester compliance marked for revision'
             ]);
-        } else {
-            return response()->json(['error' => 'Unauthorized'], 403);
+
+        } catch (\Exception $e) {
+            Log::error('Error rejecting semester compliance', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user_id' => Auth::id(),
+                'compliance_id' => $id
+            ]);
+            
+            return response()->json([
+                'error' => 'Error processing request: ' . $e->getMessage(),
+                'success' => false
+            ], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Semester compliance marked for revision'
-        ]);
     }
 
     /**
@@ -623,41 +719,88 @@ class MonitorController extends Controller
      */
     public function approveSubjectCompliance(Request $request, $id)
     {
-        $request->validate([
-            'comments' => 'nullable|string|max:500'
-        ]);
-
-        $compliance = SubjectCompliance::findOrFail($id);
-        $user = Auth::user();
-        
-        // Determine which approval level based on user role
-        if ($user->role->name === 'Program Head') {
-            $compliance->update([
-                'program_head_approval_status' => 'approved',
-                'program_head_comments' => $request->comments,
-                'program_head_approved_by' => $user->id,
-                'program_head_approved_at' => now(),
+        try {
+            $request->validate([
+                'comments' => 'nullable|string|max:500'
             ]);
-        } elseif ($user->role->name === 'Dean') {
-            $compliance->update([
-                'dean_approval_status' => 'approved',
-                'dean_comments' => $request->comments,
-                'dean_approved_by' => $user->id,
-                'dean_approved_at' => now(),
+
+            $compliance = SubjectCompliance::findOrFail($id);
+            $user = Auth::user();
+            
+            // Log for debugging
+            Log::info('Approving subject compliance', [
+                'user_id' => $user->id,
+                'user_role' => $user->role->name,
+                'compliance_id' => $id,
+                'comments' => $request->comments,
+                'subject_program_id' => $compliance->subject->program_id ?? null,
+                'user_program_id' => $user->program_id ?? null,
+                'compliance_user_id' => $compliance->user_id,
+                'faculty_user_dept_id' => $compliance->user->department_id ?? null,
+                'user_dept_id' => $user->department_id ?? null
             ]);
-        } else {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
+            
+            // Check permissions
+            if ($user->role->name === 'Program Head') {
+                // Check if the subject belongs to the Program Head's program
+                if (!$user->program_id) {
+                    return response()->json(['error' => 'Program Head not assigned to a program'], 403);
+                }
+                
+                if ($compliance->subject->program_id !== $user->program_id) {
+                    return response()->json(['error' => 'You can only approve subjects from your program'], 403);
+                }
+                
+                $compliance->update([
+                    'program_head_approval_status' => 'approved',
+                    'comments' => $request->comments,
+                    'program_head_approved_by' => $user->id,
+                    'program_head_approved_at' => now(),
+                ]);
+                
+            } elseif ($user->role->name === 'Dean') {
+                // Check if the subject's program belongs to the Dean's department
+                if (!$user->department_id) {
+                    return response()->json(['error' => 'Dean not assigned to a department'], 403);
+                }
+                
+                if ($compliance->subject->program->department_id !== $user->department_id) {
+                    return response()->json(['error' => 'You can only approve subjects from your department'], 403);
+                }
+                
+                $compliance->update([
+                    'dean_approval_status' => 'approved',
+                    'comments' => $request->comments,
+                    'dean_approved_by' => $user->id,
+                    'dean_approved_at' => now(),
+                ]);
+            } else {
+                return response()->json(['error' => 'Unauthorized - Invalid role: ' . $user->role->name], 403);
+            }
 
-        // Update overall approval status if both levels approved
-        if ($compliance->program_head_approval_status === 'approved' && $compliance->dean_approval_status === 'approved') {
-            $compliance->update(['approval_status' => 'approved']);
-        }
+            // Update overall approval status if both levels approved
+            if ($compliance->program_head_approval_status === 'approved' && $compliance->dean_approval_status === 'approved') {
+                $compliance->update(['approval_status' => 'approved']);
+            }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Subject compliance approved successfully'
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Subject compliance approved successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error approving subject compliance', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user_id' => Auth::id(),
+                'compliance_id' => $id
+            ]);
+            
+            return response()->json([
+                'error' => 'Error processing request: ' . $e->getMessage(),
+                'success' => false
+            ], 500);
+        }
     }
 
     /**
@@ -665,37 +808,81 @@ class MonitorController extends Controller
      */
     public function rejectSubjectCompliance(Request $request, $id)
     {
-        $request->validate([
-            'comments' => 'required|string|max:500'
-        ]);
+        try {
+            $request->validate([
+                'comments' => 'required|string|max:500'
+            ]);
 
-        $compliance = SubjectCompliance::findOrFail($id);
-        $user = Auth::user();
-        
-        // Determine which approval level based on user role
-        if ($user->role->name === 'Program Head') {
-            $compliance->update([
-                'program_head_approval_status' => 'needs_revision',
-                'program_head_comments' => $request->comments,
-                'program_head_approved_by' => $user->id,
-                'program_head_approved_at' => now(),
-                'approval_status' => 'needs_revision'
+            $compliance = SubjectCompliance::findOrFail($id);
+            $user = Auth::user();
+            
+            // Log for debugging
+            Log::info('Rejecting subject compliance', [
+                'user_id' => $user->id,
+                'user_role' => $user->role->name,
+                'compliance_id' => $id,
+                'comments' => $request->comments,
+                'subject_program_id' => $compliance->subject->program_id ?? null,
+                'user_program_id' => $user->program_id ?? null
             ]);
-        } elseif ($user->role->name === 'Dean') {
-            $compliance->update([
-                'dean_approval_status' => 'needs_revision',
-                'dean_comments' => $request->comments,
-                'dean_approved_by' => $user->id,
-                'dean_approved_at' => now(),
-                'approval_status' => 'needs_revision'
+            
+            // Check permissions
+            if ($user->role->name === 'Program Head') {
+                // Check if the subject belongs to the Program Head's program
+                if (!$user->program_id) {
+                    return response()->json(['error' => 'Program Head not assigned to a program'], 403);
+                }
+                
+                if ($compliance->subject->program_id !== $user->program_id) {
+                    return response()->json(['error' => 'You can only approve subjects from your program'], 403);
+                }
+                
+                $compliance->update([
+                    'program_head_approval_status' => 'needs_revision',
+                    'comments' => $request->comments,
+                    'program_head_approved_by' => $user->id,
+                    'program_head_approved_at' => now(),
+                    'approval_status' => 'needs_revision'
+                ]);
+                
+            } elseif ($user->role->name === 'Dean') {
+                // Check if the subject's program belongs to the Dean's department
+                if (!$user->department_id) {
+                    return response()->json(['error' => 'Dean not assigned to a department'], 403);
+                }
+                
+                if ($compliance->subject->program->department_id !== $user->department_id) {
+                    return response()->json(['error' => 'You can only approve subjects from your department'], 403);
+                }
+                
+                $compliance->update([
+                    'dean_approval_status' => 'needs_revision',
+                    'comments' => $request->comments,
+                    'dean_approved_by' => $user->id,
+                    'dean_approved_at' => now(),
+                    'approval_status' => 'needs_revision'
+                ]);
+            } else {
+                return response()->json(['error' => 'Unauthorized - Invalid role: ' . $user->role->name], 403);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Subject compliance marked for revision'
             ]);
-        } else {
-            return response()->json(['error' => 'Unauthorized'], 403);
+
+        } catch (\Exception $e) {
+            Log::error('Error rejecting subject compliance', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user_id' => Auth::id(),
+                'compliance_id' => $id
+            ]);
+            
+            return response()->json([
+                'error' => 'Error processing request: ' . $e->getMessage(),
+                'success' => false
+            ], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Subject compliance marked for revision'
-        ]);
     }
 }

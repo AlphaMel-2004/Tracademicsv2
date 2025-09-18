@@ -501,19 +501,80 @@ document.addEventListener('DOMContentLoaded', function() {
             url = `/monitor/${currentType}-compliance/${currentComplianceId}/needs-revision`;
         }
         
+        // Debug log
+        console.log('Submitting action:', {
+            action: currentAction,
+            type: currentType,
+            complianceId: currentComplianceId,
+            url: url,
+            comments: comments
+        });
+
+        // Check if CSRF token is available
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        if (!csrfToken) {
+            console.error('CSRF token not found!');
+            showToast('CSRF token not found. Please refresh the page.', 'error');
+            return;
+        }
+        
+        console.log('CSRF token found:', csrfToken ? 'Yes' : 'No');
+        
         fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'X-CSRF-TOKEN': csrfToken,
                 'Accept': 'application/json'
             },
             body: JSON.stringify({
                 comments: comments
             })
         })
-        .then(response => response.json())
+        .then(response => {
+            // Log response for debugging
+            console.log('Response status:', response.status);
+            console.log('Response ok:', response.ok);
+            console.log('Content-Type:', response.headers.get('content-type'));
+            
+            if (!response.ok) {
+                // Handle different HTTP status codes
+                if (response.status === 403) {
+                    throw new Error('Access denied. You may not have permission to perform this action.');
+                } else if (response.status === 404) {
+                    throw new Error('Compliance record not found.');
+                } else if (response.status === 422) {
+                    // Validation error - try to parse and show specific errors
+                    return response.json().then(errorData => {
+                        let errorMessage = 'Validation error: ';
+                        if (errorData.errors) {
+                            errorMessage += Object.values(errorData.errors).flat().join(', ');
+                        } else if (errorData.message) {
+                            errorMessage += errorData.message;
+                        }
+                        throw new Error(errorMessage);
+                    }).catch(() => {
+                        throw new Error('Validation error occurred.');
+                    });
+                } else if (response.status === 500) {
+                    throw new Error('Server error occurred. Please try again or contact support.');
+                } else {
+                    // Try to get error text for other statuses
+                    return response.text().then(text => {
+                        console.error('Response text:', text);
+                        try {
+                            const errorData = JSON.parse(text);
+                            throw new Error(errorData.message || errorData.error || `Server error (${response.status})`);
+                        } catch (e) {
+                            throw new Error(`Server error (${response.status}): ${text.substring(0, 100)}`);
+                        }
+                    });
+                }
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('Success response:', data);
             if (data.success) {
                 // Close modal
                 const modal = bootstrap.Modal.getInstance(document.getElementById('commentsModal'));
@@ -531,8 +592,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(error => {
-            console.error('Error:', error);
-            showToast('Error processing request', 'error');
+            console.error('Detailed error:', error);
+            showToast(error.message || 'Error processing request', 'error');
         });
     });
 

@@ -1,5 +1,23 @@
-<!-- VPAA Dashboard -->
-<div class="row">
+@extends('layouts.app')
+
+@section('title', 'VPAA Dashboard')
+
+@section('content')
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-chart-line me-2"></i>VPAA Dashboard</h2>
+                <div class="text-muted">
+                    <i class="fas fa-calendar me-1"></i>
+                    {{ $dashboardData['active_semester']->name ?? 'No Active Semester' }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VPAA Dashboard -->
+    <div class="row">
     <!-- University-wide Stats -->
     <div class="col-md-3 mb-4">
         <div class="card bg-primary text-white">
@@ -66,103 +84,471 @@
     </div>
 </div>
 
-<div class="row">
-    <!-- Review Actions -->
-    <div class="col-md-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-eye me-2"></i>
-                    Review & Approval
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <a href="{{ route('compliance.review') }}" class="btn btn-primary">
-                        <i class="fas fa-list me-2"></i>
-                        Review All Submissions
-                    </a>
-                    <a href="{{ route('compliance.review', ['status' => 'submitted']) }}" class="btn btn-outline-warning">
-                        <i class="fas fa-clock me-2"></i>
-                        Pending Approvals
-                    </a>
-                    <a href="{{ route('compliance.review', ['status' => 'approved']) }}" class="btn btn-outline-success">
-                        <i class="fas fa-check me-2"></i>
-                        Approved Submissions
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- University Reports -->
-    <div class="col-md-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-chart-bar me-2"></i>
-                    University Reports
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <a href="{{ route('monitor.index') }}" class="btn btn-success">
-                        <i class="fas fa-monitor me-2"></i>
-                        Monitor All Departments
-                    </a>
-                    <a href="#" class="btn btn-outline-success">
-                        <i class="fas fa-building me-2"></i>
-                        Department Compliance
-                    </a>
-                    <a href="#" class="btn btn-outline-info">
-                        <i class="fas fa-users me-2"></i>
-                        Faculty Performance
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Monitor Quick Access -->
-    <div class="col-md-12 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-chart-pie me-2"></i>
-                    University-wide Compliance Monitoring
-                </h5>
-            </div>
-            <div class="card-body">
-                <p class="text-muted mb-3">Monitor compliance status across all departments and programs in the university.</p>
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="text-center">
-                            <i class="fas fa-building fa-3x text-primary mb-2"></i>
-                            <h6>All Departments</h6>
-                            <p class="small text-muted">View department-wise compliance overview</p>
+    <!-- Department Analytics Chart -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-gradient-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                Department Compliance Analytics
+                            </h5>
+                            <small class="text-light opacity-75">University-wide compliance overview by department</small>
                         </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="text-center">
-                            <i class="fas fa-graduation-cap fa-3x text-success mb-2"></i>
-                            <h6>Programs & Faculty</h6>
-                            <p class="small text-muted">Drill down to program and faculty levels</p>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="text-center">
-                            <i class="fas fa-chart-line fa-3x text-info mb-2"></i>
-                            <h6>Real-time Analytics</h6>
-                            <p class="small text-muted">Live compliance rates and statistics</p>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" id="chartOptionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="chartOptionsDropdown">
+                                <li><a class="dropdown-item" href="#" onclick="toggleChartType()"><i class="fas fa-chart-line me-2"></i>Switch to Line Chart</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="toggleChartAnimation()"><i class="fas fa-play me-2"></i>Toggle Animation</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="exportChart()"><i class="fas fa-download me-2"></i>Export Chart</a></li>
+                            </ul>
                         </div>
                     </div>
                 </div>
-                <div class="text-center mt-3">
-                    <a href="{{ route('monitor.index') }}" class="btn btn-primary btn-lg">
-                        <i class="fas fa-monitor me-2"></i>Start Monitoring
-                    </a>
+                <div class="card-body p-4" style="min-height: 400px;">
+                    <!-- Chart Container -->
+                    <div id="chartContainer">
+                        <canvas id="departmentAnalyticsChart" width="400" height="300"></canvas>
+                    </div>
+                    
+                    <!-- Empty State -->
+                    <div id="emptyState" class="text-center py-5" style="display: none;">
+                        <i class="fas fa-chart-bar text-muted" style="font-size: 4rem; margin-bottom: 1rem;"></i>
+                        <h5 class="text-muted">No Data Available</h5>
+                        <p class="text-muted">No compliance submissions found for departments.</p>
+                    </div>
+                    
+                    <!-- Chart Summary -->
+                    <div id="chartSummary" class="mt-4 p-3 bg-light rounded" style="display: none;">
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <div class="stat-item">
+                                    <h4 id="totalDepartments" class="text-primary mb-0">0</h4>
+                                    <small class="text-muted">Total Departments</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-item">
+                                    <h4 id="totalSubmissions" class="text-info mb-0">0</h4>
+                                    <small class="text-muted">Total Submissions</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-item">
+                                    <h4 id="approvalRate" class="text-success mb-0">0%</h4>
+                                    <small class="text-muted">Overall Approval Rate</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-item">
+                                    <h4 id="pendingCount" class="text-warning mb-0">0</h4>
+                                    <small class="text-muted">Pending Reviews</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let chartInstance = null;
+let currentChartType = 'bar';
+let animationEnabled = true;
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeChart();
+});
+
+function initializeChart() {
+    const departmentData = @json($dashboardData['department_analytics'] ?? []);
+    
+    if (departmentData.length === 0 || departmentData.every(item => item.total_submissions === 0)) {
+        document.getElementById('emptyState').style.display = 'block';
+        return;
+    }
+    
+    document.getElementById('chartSummary').style.display = 'block';
+    
+    // Update summary statistics
+    updateSummaryStats(departmentData);
+    
+    // Create the chart
+    createChart(departmentData);
+}
+
+function createChart(departmentData) {
+    const ctx = document.getElementById('departmentAnalyticsChart').getContext('2d');
+    
+    // Prepare data
+    const labels = departmentData.map(item => {
+        const name = item.department_name || 'Unknown Department';
+        return name.length > 15 ? name.substring(0, 15) + '...' : name;
+    });
+    
+    const fullLabels = departmentData.map(item => item.department_name || 'Unknown Department');
+    const submissionsData = departmentData.map(item => item.total_submissions || 0);
+    const approvedData = departmentData.map(item => item.approved_submissions || 0);
+    const pendingData = departmentData.map(item => item.pending_submissions || 0);
+    const needsRevisionData = departmentData.map(item => item.needs_revision_submissions || 0);
+    const submittedData = departmentData.map(item => item.submitted_submissions || 0);
+    
+    // Enhanced color scheme
+    const colors = {
+        total: {
+            background: 'rgba(99, 102, 241, 0.8)',
+            border: 'rgba(99, 102, 241, 1)',
+            hover: 'rgba(99, 102, 241, 0.9)'
+        },
+        approved: {
+            background: 'rgba(34, 197, 94, 0.8)',
+            border: 'rgba(34, 197, 94, 1)',
+            hover: 'rgba(34, 197, 94, 0.9)'
+        },
+        pending: {
+            background: 'rgba(251, 191, 36, 0.8)',
+            border: 'rgba(251, 191, 36, 1)',
+            hover: 'rgba(251, 191, 36, 0.9)'
+        },
+        submitted: {
+            background: 'rgba(59, 130, 246, 0.8)',
+            border: 'rgba(59, 130, 246, 1)',
+            hover: 'rgba(59, 130, 246, 0.9)'
+        },
+        revision: {
+            background: 'rgba(239, 68, 68, 0.8)',
+            border: 'rgba(239, 68, 68, 1)',
+            hover: 'rgba(239, 68, 68, 0.9)'
+        }
+    };
+    
+    chartInstance = new Chart(ctx, {
+        type: currentChartType,
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Total Submissions',
+                data: submissionsData,
+                backgroundColor: colors.total.background,
+                borderColor: colors.total.border,
+                hoverBackgroundColor: colors.total.hover,
+                borderWidth: 2,
+                borderRadius: 4,
+                borderSkipped: false,
+            }, {
+                label: 'Approved',
+                data: approvedData,
+                backgroundColor: colors.approved.background,
+                borderColor: colors.approved.border,
+                hoverBackgroundColor: colors.approved.hover,
+                borderWidth: 2,
+                borderRadius: 4,
+                borderSkipped: false,
+            }, {
+                label: 'Submitted',
+                data: submittedData,
+                backgroundColor: colors.submitted.background,
+                borderColor: colors.submitted.border,
+                hoverBackgroundColor: colors.submitted.hover,
+                borderWidth: 2,
+                borderRadius: 4,
+                borderSkipped: false,
+            }, {
+                label: 'Pending Review',
+                data: pendingData,
+                backgroundColor: colors.pending.background,
+                borderColor: colors.pending.border,
+                hoverBackgroundColor: colors.pending.hover,
+                borderWidth: 2,
+                borderRadius: 4,
+                borderSkipped: false,
+            }, {
+                label: 'Needs Revision',
+                data: needsRevisionData,
+                backgroundColor: colors.revision.background,
+                borderColor: colors.revision.border,
+                hoverBackgroundColor: colors.revision.hover,
+                borderWidth: 2,
+                borderRadius: 4,
+                borderSkipped: false,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            animation: {
+                duration: animationEnabled ? 1500 : 0,
+                easing: 'easeOutQuart',
+                onComplete: function() {
+                    if (animationEnabled) {
+                        this.update('none');
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 20,
+                        font: {
+                            size: 12,
+                            weight: '500'
+                        }
+                    }
+                },
+                title: {
+                    display: true,
+                    text: 'University-wide Compliance Status by Department',
+                    font: {
+                        size: 16,
+                        weight: 'bold'
+                    },
+                    padding: {
+                        top: 10,
+                        bottom: 30
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: 'white',
+                    bodyColor: 'white',
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    displayColors: true,
+                    callbacks: {
+                        title: function(context) {
+                            return fullLabels[context[0].dataIndex];
+                        },
+                        label: function(context) {
+                            const value = context.parsed.y;
+                            const total = submissionsData[context.dataIndex];
+                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+                            return `${context.dataset.label}: ${value} (${percentage}%)`;
+                        },
+                        afterBody: function(context) {
+                            const index = context[0].dataIndex;
+                            const department = departmentData[index];
+                            const rate = department.total_submissions > 0 ? 
+                                ((department.approved_submissions / department.total_submissions) * 100).toFixed(1) : '0';
+                            return [``, `Department Code: ${department.department_code}`, `Faculty Count: ${department.faculty_count}`, `Approval Rate: ${rate}%`];
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        font: {
+                            size: 11
+                        },
+                        maxRotation: 45,
+                        minRotation: 0
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        stepSize: 1,
+                        font: {
+                            size: 11
+                        },
+                        callback: function(value) {
+                            return Number.isInteger(value) ? value : '';
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Number of Submissions',
+                        font: {
+                            size: 12,
+                            weight: '500'
+                        }
+                    }
+                }
+            },
+            onHover: (event, activeElements) => {
+                event.native.target.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+            },
+            onClick: (event, activeElements) => {
+                if (activeElements.length > 0) {
+                    const dataIndex = activeElements[0].index;
+                    const department = departmentData[dataIndex];
+                    showDepartmentDetails(department);
+                }
+            }
+        }
+    });
+}
+
+function updateSummaryStats(departmentData) {
+    const totalDepartments = departmentData.length;
+    const totalSubmissions = departmentData.reduce((sum, d) => sum + (d.total_submissions || 0), 0);
+    const totalApproved = departmentData.reduce((sum, d) => sum + (d.approved_submissions || 0), 0);
+    const totalPending = departmentData.reduce((sum, d) => sum + (d.pending_submissions || 0), 0);
+    const approvalRate = totalSubmissions > 0 ? ((totalApproved / totalSubmissions) * 100).toFixed(1) : 0;
+    
+    document.getElementById('totalDepartments').textContent = totalDepartments;
+    document.getElementById('totalSubmissions').textContent = totalSubmissions;
+    document.getElementById('approvalRate').textContent = approvalRate + '%';
+    document.getElementById('pendingCount').textContent = totalPending;
+}
+
+function showDepartmentDetails(department) {
+    const modal = `
+        <div class="modal fade" id="departmentModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-building me-2"></i>
+                            ${department.department_name}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <div class="stat-card text-center p-3 bg-primary bg-opacity-10 rounded">
+                                    <h4 class="text-primary">${department.total_submissions}</h4>
+                                    <small>Total Submissions</small>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="stat-card text-center p-3 bg-success bg-opacity-10 rounded">
+                                    <h4 class="text-success">${department.approved_submissions}</h4>
+                                    <small>Approved</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-card text-center p-3 bg-info bg-opacity-10 rounded">
+                                    <h4 class="text-info">${department.submitted_submissions}</h4>
+                                    <small>Submitted</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-card text-center p-3 bg-warning bg-opacity-10 rounded">
+                                    <h4 class="text-warning">${department.pending_submissions}</h4>
+                                    <small>Pending</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-card text-center p-3 bg-danger bg-opacity-10 rounded">
+                                    <h4 class="text-danger">${department.needs_revision_submissions}</h4>
+                                    <small>Needs Revision</small>
+                                </div>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-6">
+                                <p><strong>Department Code:</strong> ${department.department_code}</p>
+                                <p><strong>Faculty Count:</strong> ${department.faculty_count}</p>
+                            </div>
+                            <div class="col-6">
+                                <p><strong>Approval Rate:</strong> ${department.total_submissions > 0 ? ((department.approved_submissions / department.total_submissions) * 100).toFixed(1) : 0}%</p>
+                                <p><strong>Completion Rate:</strong> ${department.total_submissions > 0 ? (((department.approved_submissions + department.submitted_submissions) / department.total_submissions) * 100).toFixed(1) : 0}%</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <a href="{{ route('monitor.index') }}?department=${department.department_code}" class="btn btn-primary">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('departmentModal');
+    if (existingModal) existingModal.remove();
+    
+    // Add new modal
+    document.body.insertAdjacentHTML('beforeend', modal);
+    
+    // Show modal
+    new bootstrap.Modal(document.getElementById('departmentModal')).show();
+}
+
+function toggleChartType() {
+    currentChartType = currentChartType === 'bar' ? 'line' : 'bar';
+    chartInstance.config.type = currentChartType;
+    chartInstance.update('active');
+    
+    const dropdownText = currentChartType === 'bar' ? 'Switch to Line Chart' : 'Switch to Bar Chart';
+    event.target.innerHTML = `<i class="fas fa-chart-${currentChartType === 'bar' ? 'line' : 'bar'} me-2"></i>${dropdownText}`;
+}
+
+function toggleChartAnimation() {
+    animationEnabled = !animationEnabled;
+    chartInstance.options.animation.duration = animationEnabled ? 1500 : 0;
+    
+    const dropdownText = animationEnabled ? 'Disable Animation' : 'Enable Animation';
+    const icon = animationEnabled ? 'pause' : 'play';
+    event.target.innerHTML = `<i class="fas fa-${icon} me-2"></i>${dropdownText}`;
+}
+
+function exportChart() {
+    const url = chartInstance.toBase64Image('image/png', 1.0, '#ffffff');
+    const link = document.createElement('a');
+    link.download = 'department-analytics-chart.png';
+    link.href = url;
+    link.click();
+}
+</script>
+
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+.stat-item {
+    padding: 0.5rem;
+}
+
+.stat-item h4 {
+    font-weight: 600;
+    font-size: 1.5rem;
+}
+
+.modal .stat-card h4 {
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
+}
+
+#departmentAnalyticsChart {
+    max-height: 300px;
+}
+
+.card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1) !important;
+}
+</style>
+@endsection

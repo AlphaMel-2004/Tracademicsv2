@@ -18,7 +18,7 @@
         </nav>
     </div>
 
-    <!-- Statistics Cards -->
+    <!-- Enhanced Statistics Cards -->
     <div class="row mb-4">
         <div class="col-md-3">
             <div class="card bg-primary text-white">
@@ -26,7 +26,8 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h5 class="card-title mb-1">Total Departments</h5>
-                            <h3 class="mb-0">{{ $departments->count() }}</h3>
+                            <h3 class="mb-0">{{ $totalDepartments }}</h3>
+                            <small class="opacity-75">{{ $activeDepartments }} active, {{ $inactiveDepartments }} inactive</small>
                         </div>
                         <i class="fas fa-building fa-2x opacity-75"></i>
                     </div>
@@ -39,7 +40,8 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h5 class="card-title mb-1">Total Programs</h5>
-                            <h3 class="mb-0">{{ $departments->sum('programs_count') }}</h3>
+                            <h3 class="mb-0">{{ $totalPrograms }}</h3>
+                            <small class="opacity-75">Across all departments</small>
                         </div>
                         <i class="fas fa-graduation-cap fa-2x opacity-75"></i>
                     </div>
@@ -51,10 +53,11 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h5 class="card-title mb-1">Active Departments</h5>
-                            <h3 class="mb-0">{{ $departments->where('is_active', true)->count() }}</h3>
+                            <h5 class="card-title mb-1">Total Faculty</h5>
+                            <h3 class="mb-0">{{ $totalFaculty }}</h3>
+                            <small class="opacity-75">Active faculty members</small>
                         </div>
-                        <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                        <i class="fas fa-users fa-2x opacity-75"></i>
                     </div>
                 </div>
             </div>
@@ -64,10 +67,57 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h5 class="card-title mb-1">Avg Programs</h5>
-                            <h3 class="mb-0">{{ $departments->count() > 0 ? round($departments->sum('programs_count') / $departments->count(), 1) : 0 }}</h3>
+                            <h5 class="card-title mb-1">Health Score</h5>
+                            <h3 class="mb-0">{{ round($avgHealthScore) }}%</h3>
+                            <small class="opacity-75">Average program health</small>
                         </div>
-                        <i class="fas fa-chart-bar fa-2x opacity-75"></i>
+                        <i class="fas fa-heartbeat fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Metrics Row -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-secondary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title mb-1">Total Subjects</h5>
+                            <h3 class="mb-0">{{ $totalSubjects }}</h3>
+                            <small class="opacity-75">Across all programs</small>
+                        </div>
+                        <i class="fas fa-book fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-dark text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title mb-1">Active Status</h5>
+                            <h3 class="mb-0">{{ $activeDepartments > 0 ? round(($activeDepartments / $totalDepartments) * 100) : 0 }}%</h3>
+                            <small class="opacity-75">Departments active</small>
+                        </div>
+                        <i class="fas fa-chart-pie fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card" style="background: linear-gradient(45deg, #6f42c1, #e83e8c); color: white;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title mb-1">Avg Faculty/Dept</h5>
+                            <h3 class="mb-0">{{ $totalDepartments > 0 ? round($totalFaculty / $totalDepartments, 1) : 0 }}</h3>
+                            <small class="opacity-75">Faculty distribution</small>
+                        </div>
+                        <i class="fas fa-user-graduate fa-2x opacity-75"></i>
                     </div>
                 </div>
             </div>
@@ -96,12 +146,27 @@
                                         </div>
                                         <div>
                                             <h6 class="mb-0 text-primary">{{ $department->code }}</h6>
-                                            @if($department->is_active)
-                                                <span class="badge bg-success badge-sm">Active</span>
-                                            @else
-                                                <span class="badge bg-secondary badge-sm">Inactive</span>
-                                            @endif
+                                            <div class="d-flex gap-1 mt-1">
+                                                @if($department->is_active)
+                                                    <span class="badge bg-success badge-sm">Active</span>
+                                                @else
+                                                    <span class="badge bg-secondary badge-sm">Inactive</span>
+                                                @endif
+                                                @if($department->health_score >= 80)
+                                                    <span class="badge bg-success badge-sm">Excellent</span>
+                                                @elseif($department->health_score >= 60)
+                                                    <span class="badge bg-warning badge-sm">Good</span>
+                                                @elseif($department->health_score >= 40)
+                                                    <span class="badge bg-orange badge-sm">Fair</span>
+                                                @else
+                                                    <span class="badge bg-danger badge-sm">Needs Attention</span>
+                                                @endif
+                                            </div>
                                         </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="text-primary fw-bold">{{ $department->health_score }}%</div>
+                                        <small class="text-muted">Health</small>
                                     </div>
                                 </div>
                             </div>
@@ -114,18 +179,53 @@
                                         <p class="card-text text-muted small mb-3 fst-italic">No description available</p>
                                     @endif
                                     
+                                    <!-- Enhanced Statistics Grid -->
                                     <div class="row text-center mb-3">
-                                        <div class="col-6">
+                                        <div class="col-6 mb-2">
                                             <div class="border-end">
                                                 <h4 class="mb-0 text-primary">{{ $department->programs_count }}</h4>
                                                 <small class="text-muted">Programs</small>
                                             </div>
                                         </div>
-                                        <div class="col-6">
+                                        <div class="col-6 mb-2">
                                             <h4 class="mb-0 text-success">{{ $department->faculty_count ?? 0 }}</h4>
                                             <small class="text-muted">Faculty</small>
                                         </div>
+                                        <div class="col-6">
+                                            <div class="border-end">
+                                                <h4 class="mb-0 text-info">{{ $department->total_subjects_count ?? 0 }}</h4>
+                                                <small class="text-muted">Subjects</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <h4 class="mb-0 text-warning">{{ $department->program_head_count ?? 0 }}</h4>
+                                            <small class="text-muted">Heads</small>
+                                        </div>
                                     </div>
+
+                                    <!-- Program Health Indicator -->
+                                    @if($department->programs_count > 0)
+                                    <div class="mb-2">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <small class="text-muted">Program Health</small>
+                                            <small class="text-muted">{{ $department->health_score }}%</small>
+                                        </div>
+                                        <div class="progress" style="height: 6px;">
+                                            <div class="progress-bar 
+                                                @if($department->health_score >= 80) bg-success
+                                                @elseif($department->health_score >= 60) bg-warning
+                                                @elseif($department->health_score >= 40) bg-orange
+                                                @else bg-danger
+                                                @endif" 
+                                                role="progressbar" 
+                                                style="width: {{ $department->health_score }}%"
+                                                aria-valuenow="{{ $department->health_score }}" 
+                                                aria-valuemin="0" 
+                                                aria-valuemax="100">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endif
                                 </div>
                                 
                                 <div class="mt-auto">
@@ -137,8 +237,15 @@
                                         @if($department->programs_count > 0)
                                             <div class="text-center">
                                                 <small class="text-muted">
-                                                    <i class="fas fa-info-circle me-1"></i>
-                                                    Last updated: {{ $department->updated_at->diffForHumans() }}
+                                                    <i class="fas fa-clock me-1"></i>
+                                                    Updated {{ $department->updated_at->diffForHumans() }}
+                                                </small>
+                                            </div>
+                                        @else
+                                            <div class="text-center">
+                                                <small class="text-danger">
+                                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                                    No programs assigned
                                                 </small>
                                             </div>
                                         @endif
@@ -194,6 +301,10 @@
     .btn-primary:hover {
         background-color: #218838;
         border-color: #1e7e34;
+    }
+    
+    .bg-orange {
+        background-color: #fd7e14 !important;
     }
 </style>
 @endsection
