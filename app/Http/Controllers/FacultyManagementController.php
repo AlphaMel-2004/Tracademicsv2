@@ -398,16 +398,16 @@ class FacultyManagementController extends Controller
             abort(404, 'No program assigned to this Program Head');
         }
         
-        // Get only faculty members that are assigned to this specific program
-        $facultyIds = $program->facultyAssignments()
-            ->whereHas('user.role', function($query) {
+        // Get all faculty members from the same department as the Program Head
+        // This includes both faculty with and without subject assignments
+        $allFaculty = User::where('department_id', $user->department_id)
+            ->whereHas('role', function($query) {
                 $query->where('name', 'Faculty');
             })
-            ->pluck('user_id')
-            ->unique();
-            
-        $allFaculty = User::whereIn('id', $facultyIds)
-            ->with(['role', 'facultyAssignments.subject'])
+            ->with(['role', 'facultyAssignments' => function($query) use ($program) {
+                // Only load assignments for this specific program
+                $query->where('program_id', $program->id);
+            }, 'facultyAssignments.subject'])
             ->get();
 
         return view('faculty-management.manage', compact('program', 'allFaculty', 'user'));
@@ -456,18 +456,12 @@ class FacultyManagementController extends Controller
                 'email_verified_at' => now(),
             ]);
             
-            // Create a faculty assignment to connect the faculty to this program
-            \App\Models\FacultyAssignment::create([
-                'user_id' => $faculty->id,
-                'program_id' => $program->id,
-                'semester_id' => \App\Models\Semester::where('is_active', true)->first()?->id,
-                'assigned_by' => $user->id,
-                'assigned_at' => now(),
-            ]);
+            // Note: Faculty assignments (subject assignments) will be created separately
+            // when the faculty is assigned to specific subjects by the Program Head
             
             return response()->json([
                 'success' => true,
-                'message' => 'Faculty user registered successfully and assigned to your program',
+                'message' => 'Faculty user registered successfully. You can now assign subjects to this faculty member.',
                 'faculty' => [
                     'id' => $faculty->id,
                     'name' => $faculty->name,

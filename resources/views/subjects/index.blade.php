@@ -229,7 +229,7 @@
                                                         @if($user->role->name === 'Program Head')
                                                             <div class="form-text">
                                                                 <i class="fas fa-info-circle me-1"></i>
-                                                                Only faculty members assigned to your program are shown.
+                                                                All faculty members from your department are available for assignment.
                                                             </div>
                                                         @endif
                                                     </div>

@@ -60,23 +60,11 @@ class SubjectManagementController extends Controller
         
         // Get available faculty for assignment
         if ($user->role->name === 'Program Head' && $user->program_id) {
-            // For Program Heads: Only show faculty from their program
-            // First, get all faculty assigned to subjects in this program
-            $programFacultyIds = FacultyAssignment::whereHas('subject', function($query) use ($user) {
-                $query->where('program_id', $user->program_id);
-            })->pluck('user_id')->unique();
-            
-            // Get the faculty users
+            // For Program Heads: Show all faculty from their department
+            // This includes both faculty with and without existing assignments
             $availableFaculty = User::whereHas('role', function($query) {
                 $query->where('name', 'Faculty');
-            })->whereIn('id', $programFacultyIds)->get();
-            
-            // If no faculty assigned to program yet, show all faculty for initial assignments
-            if ($availableFaculty->isEmpty()) {
-                $availableFaculty = User::whereHas('role', function($query) {
-                    $query->where('name', 'Faculty');
-                })->where('department_id', $user->department_id)->get();
-            }
+            })->where('department_id', $user->department_id)->get();
         } else {
             // For higher roles: Show all faculty
             $availableFaculty = User::whereHas('role', function($query) {
