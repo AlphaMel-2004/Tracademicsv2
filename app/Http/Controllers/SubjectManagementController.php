@@ -60,11 +60,37 @@ class SubjectManagementController extends Controller
         
         // Get available faculty for assignment
         if ($user->role->name === 'Program Head' && $user->program_id) {
-            // For Program Heads: Show all faculty from their department
-            // This includes both faculty with and without existing assignments
-            $availableFaculty = User::whereHas('role', function($query) {
-                $query->where('name', 'Faculty');
-            })->where('department_id', $user->department_id)->get();
+            // For Program Heads: Show only faculty relevant to their specific program
+            $program = $user->program;
+            
+            // Option 1: Faculty who have current assignments in this program
+            $assignedFacultyIds = FacultyAssignment::where('program_id', $program->id)
+                ->pluck('user_id')
+                ->unique();
+            
+            // Option 2: For seeded faculty, include those with program code in their name  
+            $programFacultyByName = User::whereHas('role', function($query) {
+                    $query->where('name', 'Faculty');
+                })
+                ->where('name', 'like', 'Faculty ' . $program->code . '%')
+                ->pluck('id');
+            
+            // Option 3: Include faculty from same department without any assignments yet
+            // (These are newly registered faculty that haven't been assigned to any program)
+            $unassignedDepartmentFaculty = User::whereHas('role', function($query) {
+                    $query->where('name', 'Faculty');
+                })
+                ->where('department_id', $user->department_id)
+                ->whereDoesntHave('facultyAssignments')
+                ->pluck('id');
+            
+            // Combine all relevant faculty IDs
+            $relevantFacultyIds = $assignedFacultyIds
+                ->merge($programFacultyByName)
+                ->merge($unassignedDepartmentFaculty)
+                ->unique();
+            
+            $availableFaculty = User::whereIn('id', $relevantFacultyIds)->get();
         } else {
             // For higher roles: Show all faculty
             $availableFaculty = User::whereHas('role', function($query) {

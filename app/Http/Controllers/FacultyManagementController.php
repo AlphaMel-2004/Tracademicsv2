@@ -398,12 +398,35 @@ class FacultyManagementController extends Controller
             abort(404, 'No program assigned to this Program Head');
         }
         
-        // Get all faculty members from the same department as the Program Head
-        // This includes both faculty with and without subject assignments
-        $allFaculty = User::where('department_id', $user->department_id)
-            ->whereHas('role', function($query) {
+        // Get faculty members that belong to this specific program
+        // Option 1: Faculty who have current assignments in this program
+        $assignedFacultyIds = FacultyAssignment::where('program_id', $program->id)
+            ->pluck('user_id')
+            ->unique();
+        
+        // Option 2: For seeded faculty, include those with program code in their name  
+        $programFacultyByName = User::whereHas('role', function($query) {
                 $query->where('name', 'Faculty');
             })
+            ->where('name', 'like', 'Faculty ' . $program->code . '%')
+            ->pluck('id');
+        
+        // Option 3: Include faculty from same department without any assignments yet
+        // (These are newly registered faculty that haven't been assigned to any program)
+        $unassignedDepartmentFaculty = User::whereHas('role', function($query) {
+                $query->where('name', 'Faculty');
+            })
+            ->where('department_id', $user->department_id)
+            ->whereDoesntHave('facultyAssignments')
+            ->pluck('id');
+        
+        // Combine all relevant faculty IDs
+        $relevantFacultyIds = $assignedFacultyIds
+            ->merge($programFacultyByName)
+            ->merge($unassignedDepartmentFaculty)
+            ->unique();
+        
+        $allFaculty = User::whereIn('id', $relevantFacultyIds)
             ->with(['role', 'facultyAssignments' => function($query) use ($program) {
                 // Only load assignments for this specific program
                 $query->where('program_id', $program->id);

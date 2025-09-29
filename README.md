@@ -1,4 +1,4 @@
-# TracAdemics v3
+x`# TracAdemics v3
 
 **Faculty Compliance Management System for Academic Institutions**
 
@@ -47,8 +47,8 @@ TracAdemics is a comprehensive Laravel-based web application designed to streaml
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/your-username/tracademics.git
-   cd tracademics
+   git clone https://github.com/your-organization/your-repository.git
+   cd your-project-directory
    ```
 
 2. **Install PHP Dependencies**
@@ -82,11 +82,11 @@ Configure the following variables in your `.env` file:
 
 ### Application Settings
 ```env
-APP_NAME=TracAdemics
-APP_ENV=local
-APP_KEY=base64:YOUR_GENERATED_KEY_HERE
-APP_DEBUG=true
-APP_URL=http://localhost/tracademics/public
+APP_NAME=YourAppName
+APP_ENV=production
+APP_KEY=[Generate using: php artisan key:generate]
+APP_DEBUG=false
+APP_URL=https://yourdomain.com
 APP_LOCALE=en
 APP_FALLBACK_LOCALE=en
 ```
@@ -94,29 +94,29 @@ APP_FALLBACK_LOCALE=en
 ### Database Configuration
 ```env
 DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
+DB_HOST=your_database_host
 DB_PORT=3306
-DB_DATABASE=tracademics
-DB_USERNAME=root
-DB_PASSWORD=
+DB_DATABASE=your_database_name
+DB_USERNAME=your_database_user
+DB_PASSWORD=your_secure_password
 ```
 
 ### Session Configuration
 ```env
 SESSION_DRIVER=database
 SESSION_LIFETIME=120
-SESSION_ENCRYPT=false
+SESSION_ENCRYPT=true
 ```
 
 ### Mail Configuration (Optional)
 ```env
 MAIL_MAILER=smtp
-MAIL_HOST=smtp.gmail.com
+MAIL_HOST=your_smtp_host
 MAIL_PORT=587
-MAIL_USERNAME=your-email@gmail.com
-MAIL_PASSWORD=your-app-password
+MAIL_USERNAME=your_email_username
+MAIL_PASSWORD=your_email_password
 MAIL_ENCRYPTION=tls
-MAIL_FROM_ADDRESS="noreply@yourschool.edu"
+MAIL_FROM_ADDRESS="noreply@yourdomain.com"
 MAIL_FROM_NAME="${APP_NAME}"
 ```
 
@@ -131,7 +131,7 @@ FILESYSTEM_DISK=local
 
 1. **Create Database**
    ```sql
-   CREATE DATABASE tracademics CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   CREATE DATABASE your_database_name CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
    ```
 
 2. **Run Migrations**
@@ -155,30 +155,25 @@ FILESYSTEM_DISK=local
 - **Reset**: `php artisan migrate:reset`
 - **Status**: `php artisan migrate:status`
 
-## Default Credentials
+## Initial Setup
 
-After running the seeders, use these credentials to access the system:
+After running the database seeders, the system will create default user accounts for each role:
 
-### MIS Administrator
-- **Email**: `mis@brokenshire.edu.ph`
-- **Password**: `password`
-- **Role**: Full system access
+### User Roles Available
+- **MIS Administrator**: Full system access and configuration
+- **VPAA**: Academic oversight and institutional reporting
+- **Dean**: Department-level management and oversight
+- **Program Head**: Program-specific faculty and curriculum management
+- **Faculty**: Individual compliance and document management
 
-### VPAA (Vice President for Academic Affairs)
-- **Email**: `vpaa@brokenshire.edu.ph`
-- **Password**: `password`
-- **Role**: Academic oversight and reporting
+### Security Configuration
+1. **Change all default passwords** immediately after first deployment
+2. **Configure strong password policies** in your institution's security settings
+3. **Set up proper email verification** for new user registrations
+4. **Enable two-factor authentication** if required by your institution
+5. **Regular security audits** of user accounts and permissions
 
-### Deans
-- **ASBME Dean**: `dean.asbme@brokenshire.edu.ph` / `password`
-- **Nursing Dean**: `dean.nursing@brokenshire.edu.ph` / `password`
-- **Allied Health Dean**: `dean.alliedhealth@brokenshire.edu.ph` / `password`
-- **Graduate Studies Dean**: `dean.graduatestudies@brokenshire.edu.ph` / `password`
-
-### Program Heads & Faculty
-- Various program heads and faculty members are seeded with the default password: `password`
-
-> **⚠️ Security Note**: Change all default passwords immediately after deployment!
+> **🔒 Security Notice**: Never use default credentials in production. Always implement proper authentication and authorization policies according to your institution's security requirements.
 
 ## Configuration Options
 
@@ -280,7 +275,7 @@ php artisan test --testsuite=Feature
 ### Database Backup
 ```bash
 # Create database backup
-mysqldump -u root -p tracademics > backup_$(date +%Y%m%d_%H%M%S).sql
+mysqldump -u your_db_user -p your_database_name > backup_$(date +%Y%m%d_%H%M%S).sql
 ```
 
 ## Architecture
@@ -369,35 +364,33 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Support
 
 For support and questions:
-- **Email**: support@yourschool.edu
-- **Documentation**: Check Laravel documentation for framework-specific issues
-- **Issues**: Report bugs through GitHub Issues
+- **Documentation**: Refer to Laravel official documentation for framework-specific issues
+- **Issues**: Report bugs through the project's issue tracking system
+- **Community**: Consult Laravel community resources and forums
+- **Professional Support**: Contact your system administrator or IT department
 
 ---
 
 **TracAdemics v3** - Empowering Academic Excellence Through Technology
 
-## About Laravel
+## Technical Framework
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+This application is built with **Laravel**, a robust PHP framework that provides:
+- Clean, expressive syntax and rapid development capabilities
+- Built-in security features and authentication systems
+- Comprehensive database management with Eloquent ORM
+- Modern front-end integration with Vite and Bootstrap
+- Scalable architecture suitable for educational institutions
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Additional Resources
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- **Laravel Documentation**: [https://laravel.com/docs](https://laravel.com/docs)
+- **Bootstrap Documentation**: [https://getbootstrap.com/docs](https://getbootstrap.com/docs)
+- **PHP Best Practices**: Follow PSR standards and modern PHP conventions
 
-## Learning Laravel
+## System Requirements
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
-
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Ensure your hosting environment meets all technical requirements listed in the Requirements section above for optimal performance and security.
 
 ## Laravel Sponsors
 
