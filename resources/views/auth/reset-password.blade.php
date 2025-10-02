@@ -9,7 +9,7 @@
     </div>
     <div class="brand-title">Academic Compliance Monitoring System</div>
     <div class="brand-description">
-        Facilitating the efficient management of faculty requirements and timely submission of academic documentation.
+        Create a new secure password for your account.
     </div>
 </div>
 
@@ -17,12 +17,12 @@
 <div class="auth-right">
     <div class="form-container">
         <div class="form-header">
-            <h2>Welcome Back</h2>
-            <p>Please sign in to your account</p>
+            <h2>Reset Password</h2>
+            <p>Enter your new password below</p>
         </div>
 
         <div class="user-avatar">
-            <i class="fas fa-user"></i>
+            <i class="fas fa-key"></i>
         </div>
 
         <!-- Display Validation Errors -->
@@ -41,8 +41,11 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('login') }}">
+        <form method="POST" action="{{ route('password.update') }}">
             @csrf
+
+            <!-- Hidden token field -->
+            <input type="hidden" name="token" value="{{ $token }}">
 
             <div class="form-group">
                 <label for="username" class="form-label text-muted mb-2">Email Username</label>
@@ -72,7 +75,7 @@
             </div>
 
             <div class="form-group">
-                <label for="password" class="form-label text-muted mb-2">Password</label>
+                <label for="password" class="form-label text-muted mb-2">New Password</label>
                 <div class="position-relative">
                     <input 
                         id="password" 
@@ -80,8 +83,8 @@
                         class="form-control @error('password') is-invalid @enderror" 
                         name="password" 
                         required 
-                        autocomplete="current-password"
-                        placeholder="Enter your password"
+                        autocomplete="new-password"
+                        placeholder="Enter new password"
                         style="border-radius: 8px; background-color: #f8f9fa; padding-right: 45px;"
                     >
                     <button type="button" class="btn btn-link position-absolute" id="togglePassword" 
@@ -96,31 +99,38 @@
                 @enderror
             </div>
 
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <div class="form-check">
+            <div class="form-group">
+                <label for="password_confirmation" class="form-label text-muted mb-2">Confirm New Password</label>
+                <div class="position-relative">
                     <input 
-                        class="form-check-input" 
-                        type="checkbox" 
-                        name="remember" 
-                        id="remember" 
-                        {{ old('remember') ? 'checked' : '' }}
+                        id="password_confirmation" 
+                        type="password" 
+                        class="form-control" 
+                        name="password_confirmation" 
+                        required 
+                        autocomplete="new-password"
+                        placeholder="Confirm new password"
+                        style="border-radius: 8px; background-color: #f8f9fa; padding-right: 45px;"
                     >
-                    <label class="form-check-label" for="remember">
-                        Remember me
-                    </label>
+                    <button type="button" class="btn btn-link position-absolute" id="togglePasswordConfirm" 
+                            style="top: 50%; right: 10px; transform: translateY(-50%); border: none; background: none; color: #6c757d; z-index: 10;">
+                        <i class="fas fa-eye" id="togglePasswordConfirmIcon"></i>
+                    </button>
                 </div>
-                @if (Route::has('password.request'))
-                    <a href="{{ route('password.request') }}" class="forgot-link">
-                        Forgot Password?
-                    </a>
-                @endif
             </div>
 
-            <button type="submit" class="btn-login">
-                <i class="fas fa-sign-in-alt me-2"></i>
-                Login
+            <button type="submit" class="btn-reset">
+                <i class="fas fa-save me-2"></i>
+                Reset Password
             </button>
         </form>
+
+        <div class="text-center mt-3">
+            <a href="{{ route('login') }}" class="back-to-login">
+                <i class="fas fa-arrow-left me-1"></i>
+                Back to Login
+            </a>
+        </div>
 
         <div class="email-notice">
             Only emails with brokenshire domain are allowed.
@@ -187,65 +197,61 @@
     background-color: #fff;
 }
 
-/* Login button styling */
-.btn-login {
+/* Reset button styling */
+.btn-reset {
     background-color: #28a745;
     border-color: #28a745;
+    color: white;
     border-radius: 8px;
     padding: 12px 24px;
     font-size: 16px;
     font-weight: 600;
     width: 100%;
     border: none;
-    color: white;
     cursor: pointer;
     transition: all 0.15s ease-in-out;
 }
 
-.btn-login:hover {
+.btn-reset:hover {
     background-color: #218838;
     border-color: #1e7e34;
     transform: translateY(-1px);
 }
 
-/* Forgot password link styling */
-.forgot-link {
-    color: #007bff;
+/* Back to login link */
+.back-to-login {
+    color: #6c757d;
     text-decoration: none;
     font-size: 14px;
-    font-weight: 500;
     transition: color 0.15s ease-in-out;
 }
 
-.forgot-link:hover {
-    color: #0056b3;
-    text-decoration: underline;
+.back-to-login:hover {
+    color: #28a745;
+    text-decoration: none;
+}
+
+/* Email notice styling */
+.email-notice {
+    text-align: center;
+    color: #6c757d;
+    font-size: 12px;
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
 }
 </style>
 
 <script>
-function togglePasswordVisibility(inputId, button) {
-    const passwordInput = document.getElementById(inputId);
-    const icon = button.querySelector('i');
-    
-    if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        icon.classList.remove('fa-eye');
-        icon.classList.add('fa-eye-slash');
-    } else {
-        passwordInput.type = 'password';
-        icon.classList.remove('fa-eye-slash');
-        icon.classList.add('fa-eye');
-    }
-}
-
 // Handle email combination on form submission
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.querySelector('form[method="POST"]');
     const usernameInput = document.getElementById('username');
     const emailInput = document.getElementById('email');
     
-    // Password toggle functionality
+    // Password toggle functionality for new password
     const togglePassword = document.getElementById('togglePassword');
     const passwordInput = document.getElementById('password');
     const toggleIcon = document.getElementById('togglePasswordIcon');
@@ -260,6 +266,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 passwordInput.type = 'password';
                 toggleIcon.classList.remove('fa-eye-slash');
                 toggleIcon.classList.add('fa-eye');
+            }
+        });
+    }
+    
+    // Password toggle functionality for confirm password
+    const togglePasswordConfirm = document.getElementById('togglePasswordConfirm');
+    const passwordConfirmInput = document.getElementById('password_confirmation');
+    const toggleConfirmIcon = document.getElementById('togglePasswordConfirmIcon');
+    
+    if (togglePasswordConfirm && passwordConfirmInput && toggleConfirmIcon) {
+        togglePasswordConfirm.addEventListener('click', function() {
+            if (passwordConfirmInput.type === 'password') {
+                passwordConfirmInput.type = 'text';
+                toggleConfirmIcon.classList.remove('fa-eye');
+                toggleConfirmIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordConfirmInput.type = 'password';
+                toggleConfirmIcon.classList.remove('fa-eye-slash');
+                toggleConfirmIcon.classList.add('fa-eye');
             }
         });
     }

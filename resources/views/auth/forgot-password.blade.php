@@ -9,7 +9,7 @@
     </div>
     <div class="brand-title">Academic Compliance Monitoring System</div>
     <div class="brand-description">
-        Facilitating the efficient management of faculty requirements and timely submission of academic documentation.
+        Reset your password to continue accessing your academic management tools.
     </div>
 </div>
 
@@ -17,12 +17,12 @@
 <div class="auth-right">
     <div class="form-container">
         <div class="form-header">
-            <h2>Welcome Back</h2>
-            <p>Please sign in to your account</p>
+            <h2>Forgot Password</h2>
+            <p>Enter your email address and we'll send you a link to reset your password</p>
         </div>
 
         <div class="user-avatar">
-            <i class="fas fa-user"></i>
+            <i class="fas fa-lock"></i>
         </div>
 
         <!-- Display Validation Errors -->
@@ -41,7 +41,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('login') }}">
+        <form method="POST" action="{{ route('password.email') }}">
             @csrf
 
             <div class="form-group">
@@ -71,56 +71,18 @@
                 @enderror
             </div>
 
-            <div class="form-group">
-                <label for="password" class="form-label text-muted mb-2">Password</label>
-                <div class="position-relative">
-                    <input 
-                        id="password" 
-                        type="password" 
-                        class="form-control @error('password') is-invalid @enderror" 
-                        name="password" 
-                        required 
-                        autocomplete="current-password"
-                        placeholder="Enter your password"
-                        style="border-radius: 8px; background-color: #f8f9fa; padding-right: 45px;"
-                    >
-                    <button type="button" class="btn btn-link position-absolute" id="togglePassword" 
-                            style="top: 50%; right: 10px; transform: translateY(-50%); border: none; background: none; color: #6c757d; z-index: 10;">
-                        <i class="fas fa-eye" id="togglePasswordIcon"></i>
-                    </button>
-                </div>
-                @error('password')
-                    <div class="invalid-feedback d-block">
-                        {{ $message }}
-                    </div>
-                @enderror
-            </div>
-
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <div class="form-check">
-                    <input 
-                        class="form-check-input" 
-                        type="checkbox" 
-                        name="remember" 
-                        id="remember" 
-                        {{ old('remember') ? 'checked' : '' }}
-                    >
-                    <label class="form-check-label" for="remember">
-                        Remember me
-                    </label>
-                </div>
-                @if (Route::has('password.request'))
-                    <a href="{{ route('password.request') }}" class="forgot-link">
-                        Forgot Password?
-                    </a>
-                @endif
-            </div>
-
-            <button type="submit" class="btn-login">
-                <i class="fas fa-sign-in-alt me-2"></i>
-                Login
+            <button type="submit" class="btn-reset">
+                <i class="fas fa-paper-plane me-2"></i>
+                Send Reset Link
             </button>
         </form>
+
+        <div class="text-center mt-3">
+            <a href="{{ route('login') }}" class="back-to-login">
+                <i class="fas fa-arrow-left me-1"></i>
+                Back to Login
+            </a>
+        </div>
 
         <div class="email-notice">
             Only emails with brokenshire domain are allowed.
@@ -173,96 +135,59 @@
     font-size: 14px;
 }
 
-/* Password field styling to match */
-.form-control {
-    border: 2px solid #e9ecef;
-    padding: 12px 16px;
-    font-size: 16px;
-    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-}
-
-.form-control:focus {
-    border-color: #28a745;
-    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
-    background-color: #fff;
-}
-
-/* Login button styling */
-.btn-login {
-    background-color: #28a745;
-    border-color: #28a745;
+/* Reset button styling */
+.btn-reset {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
     border-radius: 8px;
     padding: 12px 24px;
     font-size: 16px;
     font-weight: 600;
     width: 100%;
     border: none;
-    color: white;
     cursor: pointer;
     transition: all 0.15s ease-in-out;
 }
 
-.btn-login:hover {
-    background-color: #218838;
-    border-color: #1e7e34;
+.btn-reset:hover {
+    background-color: #0056b3;
+    border-color: #004085;
     transform: translateY(-1px);
 }
 
-/* Forgot password link styling */
-.forgot-link {
-    color: #007bff;
+/* Back to login link */
+.back-to-login {
+    color: #6c757d;
     text-decoration: none;
     font-size: 14px;
-    font-weight: 500;
     transition: color 0.15s ease-in-out;
 }
 
-.forgot-link:hover {
-    color: #0056b3;
-    text-decoration: underline;
+.back-to-login:hover {
+    color: #28a745;
+    text-decoration: none;
+}
+
+/* Email notice styling */
+.email-notice {
+    text-align: center;
+    color: #6c757d;
+    font-size: 12px;
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
 }
 </style>
 
 <script>
-function togglePasswordVisibility(inputId, button) {
-    const passwordInput = document.getElementById(inputId);
-    const icon = button.querySelector('i');
-    
-    if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        icon.classList.remove('fa-eye');
-        icon.classList.add('fa-eye-slash');
-    } else {
-        passwordInput.type = 'password';
-        icon.classList.remove('fa-eye-slash');
-        icon.classList.add('fa-eye');
-    }
-}
-
 // Handle email combination on form submission
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.querySelector('form[method="POST"]');
     const usernameInput = document.getElementById('username');
     const emailInput = document.getElementById('email');
-    
-    // Password toggle functionality
-    const togglePassword = document.getElementById('togglePassword');
-    const passwordInput = document.getElementById('password');
-    const toggleIcon = document.getElementById('togglePasswordIcon');
-    
-    if (togglePassword && passwordInput && toggleIcon) {
-        togglePassword.addEventListener('click', function() {
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                toggleIcon.classList.remove('fa-eye');
-                toggleIcon.classList.add('fa-eye-slash');
-            } else {
-                passwordInput.type = 'password';
-                toggleIcon.classList.remove('fa-eye-slash');
-                toggleIcon.classList.add('fa-eye');
-            }
-        });
-    }
     
     form.addEventListener('submit', function(e) {
         const username = usernameInput.value.trim();

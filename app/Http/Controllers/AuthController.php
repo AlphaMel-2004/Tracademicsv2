@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 use App\Models\User;
 use App\Traits\LogsUserActivity;
@@ -121,5 +122,77 @@ class AuthController extends Controller
         Auth::login($user);
 
         return redirect('/dashboard');
+    }
+
+    /**
+     * Show the forgot password form
+     */
+    public function showForgotPasswordForm()
+    {
+        // Only MIS (admin) users can use the forgot password form
+        // Non-MIS users should contact admin for password reset
+        return view('auth.contact-admin');
+    }
+
+    /**
+     * Send a reset link to the given user.
+     */
+    public function sendResetLink(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|ends_with:@brokenshire.edu.ph',
+        ], [
+            'email.ends_with' => 'Only @brokenshire.edu.ph email addresses are allowed.',
+        ]);
+
+        // Check if user exists
+        $user = User::where('email', $request->email)->first();
+        if (!$user) {
+            return back()->withErrors(['email' => 'We could not find a user with that email address.']);
+        }
+
+        // Send password reset link
+        $status = \Illuminate\Support\Facades\Password::sendResetLink(
+            $request->only('email')
+        );
+
+        return $status === \Illuminate\Support\Facades\Password::RESET_LINK_SENT
+            ? back()->with(['status' => __($status)])
+            : back()->withErrors(['email' => __($status)]);
+    }
+
+    /**
+     * Show the password reset form
+     */
+    public function showResetForm($token)
+    {
+        return view('auth.reset-password', ['token' => $token]);
+    }
+
+    /**
+     * Reset the given user's password.
+     */
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email|ends_with:@brokenshire.edu.ph',
+            'password' => 'required|min:8|confirmed',
+        ], [
+            'email.ends_with' => 'Only @brokenshire.edu.ph email addresses are allowed.',
+        ]);
+
+        $status = \Illuminate\Support\Facades\Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function (User $user, string $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password)
+                ])->save();
+            }
+        );
+
+        return $status === \Illuminate\Support\Facades\Password::PASSWORD_RESET
+            ? redirect()->route('login')->with('status', __($status))
+            : back()->withErrors(['email' => [__($status)]]);
     }
 }

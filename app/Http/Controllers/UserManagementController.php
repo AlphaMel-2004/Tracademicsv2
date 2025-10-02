@@ -229,4 +229,42 @@ class UserManagementController extends Controller
         
         return back()->with('success', 'User deleted successfully.');
     }
+
+    /**
+     * Reset user password to default "password"
+     */
+    public function resetPassword(User $user)
+    {
+        $authUser = Auth::user();
+        
+        // Only MIS can reset passwords
+        if ($authUser->role->name !== 'MIS') {
+            abort(403, 'Unauthorized access');
+        }
+        
+        // Prevent resetting own password (MIS should use forgot password form)
+        if ($user->id === $authUser->id) {
+            return back()->with('error', 'You cannot reset your own password. Use the forgot password form.');
+        }
+        
+        // Reset password to default "password"
+        $user->update([
+            'password' => Hash::make('password')
+        ]);
+        
+        // Log the activity
+        $this->logActivity(
+            'Password Reset',
+            "Reset password for user: {$user->name} ({$user->email})",
+            [
+                'target_user_id' => $user->id,
+                'target_user_name' => $user->name,
+                'target_user_email' => $user->email,
+                'reset_by' => $authUser->name
+            ],
+            $user->id
+        );
+        
+        return back()->with('success', "Password reset successfully for {$user->name}. New password is: password");
+    }
 }

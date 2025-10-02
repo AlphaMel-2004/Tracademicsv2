@@ -137,6 +137,14 @@
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             @if($user->id !== Auth::id())
+                                            <form method="POST" action="{{ route('users.reset-password', $user) }}" class="d-inline me-1" 
+                                                  onsubmit="return confirm('Are you sure you want to reset this user\'s password to \'password\'?')">
+                                                @csrf
+                                                @method('PATCH')
+                                                <button type="submit" class="btn btn-sm btn-outline-warning" title="Reset Password">
+                                                    <i class="fas fa-key"></i>
+                                                </button>
+                                            </form>
                                             <form method="POST" action="{{ route('users.destroy', $user) }}" class="d-inline" 
                                                   onsubmit="return confirm('Are you sure you want to delete this user?')">
                                                 @csrf

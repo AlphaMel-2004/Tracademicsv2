@@ -18,6 +18,10 @@ use App\Http\Controllers\MonitorController;
 use App\Http\Controllers\AssignedSubjectsController;
 use App\Http\Controllers\ProgramsManagementController;
 use App\Http\Controllers\FacultySemesterComplianceController;
+use App\Http\Controllers\SitemapController;
+
+// SEO Routes
+Route::get('/sitemap.xml', [SitemapController::class, 'index']);
 
 // Redirect root to login
 Route::get('/', function () {
@@ -30,6 +34,12 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::get('/register', [AuthController::class, 'showRegistrationForm'])->name('register');
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+// Password Reset Routes
+Route::get('/forgot-password', [AuthController::class, 'showForgotPasswordForm'])->name('password.request');
+Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->name('password.email');
+Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
+Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
 
 // Protected Routes
 Route::middleware(['auth'])->group(function () {
@@ -125,6 +135,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{user}', [UserManagementController::class, 'show'])->name('show');
         Route::get('/{user}/edit', [UserManagementController::class, 'edit'])->name('edit');
         Route::put('/{user}', [UserManagementController::class, 'update'])->name('update');
+        Route::patch('/{user}/reset-password', [UserManagementController::class, 'resetPassword'])->name('reset-password');
         Route::delete('/{user}', [UserManagementController::class, 'destroy'])->name('destroy');
     });
 
