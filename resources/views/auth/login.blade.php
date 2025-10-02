@@ -139,13 +139,74 @@
     position: relative;
 }
 
-.username-input {
+.username-input, .username-input-normal {
     border: 2px solid #e9ecef;
     border-radius: 8px !important;
     background-color: #f8f9fa;
     padding: 12px 160px 12px 16px !important;
     font-size: 16px;
     transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+/* Warning state when user tries to type domain */
+.username-input.domain-warning {
+    border: 2px solid #dc3545 !important;
+    background-color: #fff5f5 !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    animation: shake 0.5s ease-in-out;
+}
+
+/* Shake animation for domain warning */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+    20%, 40%, 60%, 80% { transform: translateX(2px); }
+}
+
+/* Warning message styling */
+.domain-warning-message {
+    display: none;
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-top: 5px;
+    font-size: 13px;
+    font-weight: 500;
+    animation: slideDown 0.3s ease-out;
+    position: relative;
+    z-index: 5;
+}
+
+/* Slide down animation for warning message */
+@keyframes slideDown {
+    0% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+    .domain-warning-message {
+        font-size: 12px;
+        padding: 6px 10px;
+    }
+    
+    .username-input {
+        padding: 10px 140px 10px 14px !important;
+        font-size: 14px;
+    }
+    
+    .domain-suffix {
+        font-size: 14px;
+        right: 14px;
+    }
 }
 
 .username-input:focus {
@@ -272,14 +333,71 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Also update email field on username input change for real-time validation
-    usernameInput.addEventListener('input', function() {
-        const username = this.value.trim();
+    // Prevent typing @brokenshire.edu.ph and show red border warning
+    function preventDomainTyping() {
+        const domainText = '@brokenshire.edu.ph';
+        const inputValue = usernameInput.value;
+        
+        // Check if user is trying to type the domain
+        if (inputValue.includes('@')) {
+            // Remove the @ and everything after it
+            const cleanUsername = inputValue.split('@')[0];
+            usernameInput.value = cleanUsername;
+            
+            // Add red border warning
+            usernameInput.classList.add('domain-warning');
+            usernameInput.classList.remove('username-input-normal');
+            
+            // Show warning message
+            showDomainWarning();
+            
+            // Remove warning after 3 seconds
+            setTimeout(() => {
+                usernameInput.classList.remove('domain-warning');
+                usernameInput.classList.add('username-input-normal');
+                hideDomainWarning();
+            }, 3000);
+        } else {
+            // Normal input, ensure normal styling
+            usernameInput.classList.remove('domain-warning');
+            usernameInput.classList.add('username-input-normal');
+        }
+        
+        // Update email field
+        const username = usernameInput.value.trim();
         if (username) {
             emailInput.value = username + '@brokenshire.edu.ph';
         } else {
             emailInput.value = '';
         }
+    }
+    
+    // Show domain warning message
+    function showDomainWarning() {
+        let warningMsg = document.getElementById('domain-warning-msg');
+        if (!warningMsg) {
+            warningMsg = document.createElement('div');
+            warningMsg.id = 'domain-warning-msg';
+            warningMsg.className = 'domain-warning-message';
+            warningMsg.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>No need to type @brokenshire.edu.ph - it\'s automatically added!';
+            usernameInput.parentNode.parentNode.appendChild(warningMsg);
+        }
+        warningMsg.style.display = 'block';
+    }
+    
+    // Hide domain warning message
+    function hideDomainWarning() {
+        const warningMsg = document.getElementById('domain-warning-msg');
+        if (warningMsg) {
+            warningMsg.style.display = 'none';
+        }
+    }
+    
+    // Add event listeners
+    usernameInput.addEventListener('input', preventDomainTyping);
+    usernameInput.addEventListener('paste', function(e) {
+        // Handle paste events
+        setTimeout(preventDomainTyping, 10);
     });
 });
 </script>
