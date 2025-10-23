@@ -30,48 +30,27 @@ class DocumentTypeSeeder extends Seeder
                 'due_days' => 30
             ],
             [
-                'name' => 'Training Certificates',
-                'description' => 'Certificates of completed trainings, seminars, and professional development programs',
+                'name' => 'Certificates of Trainings Attended (past 5 years)',
+                'description' => 'Certificates of completed trainings, seminars, and professional development programs from the past 5 years',
                 'submission_type' => 'semester',
                 'is_required' => true,
                 'due_days' => 30
             ],
             [
-                'name' => 'Faculty Load Assignment',
+                'name' => 'Faculty Load',
                 'description' => 'Official faculty teaching load and subject assignment for the semester',
                 'submission_type' => 'semester',
                 'is_required' => true,
                 'due_days' => 15
             ],
-            [
-                'name' => 'Performance Evaluation Form',
-                'description' => 'Faculty performance evaluation and self-assessment form',
-                'submission_type' => 'semester',
-                'is_required' => true,
-                'due_days' => 20
-            ],
             
             // Subject-specific requirements (submit for each assigned subject)
             [
-                'name' => 'Course Syllabus',
-                'description' => 'Detailed course syllabus including learning objectives, topics, and assessment methods',
+                'name' => 'Syllabus',
+                'description' => 'Course syllabus including learning objectives, topics, and assessment methods (specify the subject)',
                 'submission_type' => 'subject',
                 'is_required' => true,
                 'due_days' => 15
-            ],
-            [
-                'name' => 'Course Outline',
-                'description' => 'Comprehensive course outline with weekly lesson plans and activities',
-                'submission_type' => 'subject',
-                'is_required' => true,
-                'due_days' => 15
-            ],
-            [
-                'name' => 'Lesson Plans',
-                'description' => 'Detailed lesson plans for all scheduled class sessions',
-                'submission_type' => 'subject',
-                'is_required' => true,
-                'due_days' => 20
             ],
             [
                 'name' => 'Prelim Test Questions',
@@ -86,13 +65,6 @@ class DocumentTypeSeeder extends Seeder
                 'submission_type' => 'subject',
                 'is_required' => true,
                 'due_days' => 50
-            ],
-            [
-                'name' => 'Prelim Table of Specifications',
-                'description' => 'Table of specifications for preliminary examinations',
-                'submission_type' => 'subject',
-                'is_required' => true,
-                'due_days' => 45
             ],
             [
                 'name' => 'Midterm Test Questions',
@@ -116,21 +88,14 @@ class DocumentTypeSeeder extends Seeder
                 'due_days' => 80
             ],
             [
-                'name' => 'Pre-final Test Questions',
+                'name' => 'Prefinal Test Questions',
                 'description' => 'Pre-final examination questions and corresponding answer key',
                 'submission_type' => 'subject',
                 'is_required' => true,
                 'due_days' => 105
             ],
             [
-                'name' => 'Pre-final Table of Specifications',
-                'description' => 'Table of specifications for pre-final examinations',
-                'submission_type' => 'subject',
-                'is_required' => true,
-                'due_days' => 105
-            ],
-            [
-                'name' => 'Pre-final Class Record',
+                'name' => 'Prefinal Class Record',
                 'description' => 'Pre-final class record with complete attendance and grade updates',
                 'submission_type' => 'subject',
                 'is_required' => true,
@@ -163,92 +128,6 @@ class DocumentTypeSeeder extends Seeder
                 'submission_type' => 'subject',
                 'is_required' => true,
                 'due_days' => 145
-            ],
-            
-            // Additional important documents based on actual faculty submissions
-            [
-                'name' => 'Attendance Record',
-                'description' => 'Complete student attendance record for the entire semester',
-                'submission_type' => 'subject',
-                'is_required' => true,
-                'due_days' => 145
-            ],
-            [
-                'name' => 'Student Portfolio Assessment',
-                'description' => 'Assessment of student portfolios and project work',
-                'submission_type' => 'subject',
-                'is_required' => false,
-                'due_days' => 130
-            ],
-            [
-                'name' => 'Course Evaluation Report',
-                'description' => 'End-of-semester course evaluation and improvement recommendations',
-                'submission_type' => 'subject',
-                'is_required' => true,
-                'due_days' => 150
-            ]
-        ];
-                'submission_type' => 'subject',
-                'is_required' => true,
-                'due_days' => 105
-            ],
-            [
-                'name' => 'Pre-final Class Record',
-                'description' => 'Pre-final class record',
-                'submission_type' => 'subject',
-                'is_required' => true,
-                'due_days' => 110
-            ],
-            [
-                'name' => 'Final Test Questions',
-                'description' => 'Final examination questions',
-                'submission_type' => 'subject',
-                'is_required' => true,
-                'due_days' => 135
-            ],
-            [
-                'name' => 'Final Table of Specifications',
-                'description' => 'Final table of specifications',
-                'submission_type' => 'subject',
-                'is_required' => true,
-                'due_days' => 135
-            ],
-            [
-                'name' => 'Final Class Record',
-                'description' => 'Final class record',
-                'submission_type' => 'subject',
-                'is_required' => true,
-                'due_days' => 140
-            ],
-            [
-                'name' => 'Final Grading Sheet',
-                'description' => 'Official final grading sheet for student grade submission',
-                'submission_type' => 'subject',
-                'is_required' => true,
-                'due_days' => 145
-            ],
-            
-            // Additional important documents based on actual faculty submissions
-            [
-                'name' => 'Attendance Record',
-                'description' => 'Complete student attendance record for the entire semester',
-                'submission_type' => 'subject',
-                'is_required' => true,
-                'due_days' => 145
-            ],
-            [
-                'name' => 'Student Portfolio Assessment',
-                'description' => 'Assessment of student portfolios and project work',
-                'submission_type' => 'subject',
-                'is_required' => false,
-                'due_days' => 130
-            ],
-            [
-                'name' => 'Course Evaluation Report',
-                'description' => 'End-of-semester course evaluation and improvement recommendations',
-                'submission_type' => 'subject',
-                'is_required' => true,
-                'due_days' => 150
             ]
         ];
 
