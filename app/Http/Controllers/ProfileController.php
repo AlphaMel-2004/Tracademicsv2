@@ -7,9 +7,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use App\Models\User;
+use App\Traits\LogsUserActivity;
 
 class ProfileController extends Controller
 {
+    use LogsUserActivity;
+
     /**
      * Show the profile settings page
      */
@@ -31,9 +34,26 @@ class ProfileController extends Controller
             'name' => ['required', 'string', 'max:255'],
         ]);
 
+        $originalName = $user->name;
+
         User::where('id', $user->id)->update([
             'name' => $request->name,
         ]);
+
+        if ($originalName !== $request->name) {
+            self::logActivity(
+                'profile_update',
+                'Updated profile information',
+                [
+                    'fields' => [
+                        'name' => [
+                            'old' => $originalName,
+                            'new' => $request->name,
+                        ],
+                    ],
+                ]
+            );
+        }
 
         return redirect()->route('profile.show')->with('success', 'Profile updated successfully!');
     }
@@ -65,6 +85,11 @@ class ProfileController extends Controller
         User::where('id', $user->id)->update([
             'password' => Hash::make($request->password),
         ]);
+
+        self::logActivity(
+            'password_change',
+            'Updated account password'
+        );
 
         return redirect()->route('profile.password')->with('success', 'Password updated successfully!');
     }

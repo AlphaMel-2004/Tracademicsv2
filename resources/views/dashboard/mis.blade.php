@@ -107,8 +107,21 @@
                                     </td>
                                     <td>
                                         <div>
-                                            <span class="badge bg-{{ $activity->action == 'login' ? 'success' : ($activity->action == 'logout' ? 'secondary' : ($activity->action == 'create' ? 'primary' : ($activity->action == 'update' ? 'info' : 'warning'))) }}">
-                                                {{ ucfirst($activity->action) }}
+                                            @php
+                                                $actionColors = [
+                                                    'login' => 'success',
+                                                    'logout' => 'secondary',
+                                                    'create' => 'primary',
+                                                    'update' => 'info',
+                                                    'delete' => 'danger',
+                                                    'profile_update' => 'info',
+                                                    'password_change' => 'warning',
+                                                ];
+                                                $badgeColor = $actionColors[$activity->action] ?? 'secondary';
+                                                $actionLabel = ucwords(str_replace('_', ' ', $activity->action));
+                                            @endphp
+                                            <span class="badge bg-{{ $badgeColor }}">
+                                                {{ $actionLabel }}
                                             </span>
                                             <div class="small text-muted mt-1">{{ $activity->description }}</div>
                                         </div>
