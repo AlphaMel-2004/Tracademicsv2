@@ -121,6 +121,7 @@
                                 <th>Document Type</th>
                                 <th>Description</th>
                                 <th>Evidence</th>
+                                <th>Document Status</th>
                                 <th>Self-Evaluation Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -144,6 +145,41 @@
                                                 <i class="fas fa-exclamation-triangle me-1"></i>Required
                                             </span>
                                         @endif
+                                    </td>
+                                    <td>
+                                        @php
+                                            $approvalStatus = $requirement['compliance']->approval_status ?? 'draft';
+                                            $statusMap = [
+                                                'draft' => ['label' => 'Draft', 'class' => 'secondary', 'icon' => 'file'],
+                                                'submitted' => ['label' => 'Submitted', 'class' => 'info', 'icon' => 'paper-plane'],
+                                                'pending' => ['label' => 'Pending Review', 'class' => 'warning', 'icon' => 'clock'],
+                                                'approved' => ['label' => 'Approved', 'class' => 'success', 'icon' => 'check-circle'],
+                                                'needs_revision' => ['label' => 'Needs Revision', 'class' => 'danger', 'icon' => 'exclamation-circle'],
+                                            ];
+                                            $statusDisplay = $statusMap[$approvalStatus] ?? ['label' => ucfirst($approvalStatus), 'class' => 'secondary', 'icon' => 'question-circle'];
+
+                                            $stageLabels = [
+                                                'pending' => ['label' => 'Pending', 'class' => 'text-muted', 'icon' => 'clock'],
+                                                'approved' => ['label' => 'Approved', 'class' => 'text-success', 'icon' => 'check-circle'],
+                                                'needs_revision' => ['label' => 'Needs Revision', 'class' => 'text-warning', 'icon' => 'exclamation-circle'],
+                                            ];
+
+                                            $programHeadStatus = $requirement['compliance']->program_head_approval_status ?? 'pending';
+                                            $deanStatus = $requirement['compliance']->dean_approval_status ?? 'pending';
+                                            $phDisplay = $stageLabels[$programHeadStatus] ?? $stageLabels['pending'];
+                                            $deanDisplay = $stageLabels[$deanStatus] ?? $stageLabels['pending'];
+                                        @endphp
+                                        <span class="badge bg-{{ $statusDisplay['class'] }}">
+                                            <i class="fas fa-{{ $statusDisplay['icon'] }} me-1"></i>{{ $statusDisplay['label'] }}
+                                        </span>
+                                        <div class="small mt-2">
+                                            <div class="{{ $phDisplay['class'] }}">
+                                                <i class="fas fa-user-tie me-1"></i>PH: {{ $phDisplay['label'] }}
+                                            </div>
+                                            <div class="{{ $deanDisplay['class'] }}">
+                                                <i class="fas fa-user-graduate me-1"></i>Dean: {{ $deanDisplay['label'] }}
+                                            </div>
+                                        </div>
                                     </td>
                                     <td>
                                         <select class="form-select form-select-sm compliance-status" data-field="self_evaluation_status">
