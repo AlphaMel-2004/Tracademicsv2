@@ -9,14 +9,6 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2><i class="fas fa-cogs me-2"></i>System Settings</h2>
             </div>
-
-            @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-            @endif
-
             <div class="row mb-4">
                 <!-- System Statistics -->
                 <div class="col-md-3">

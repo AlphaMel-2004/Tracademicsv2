@@ -159,7 +159,137 @@
         .h-100 {
             height: 100% !important;
         }
+
+        .global-toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1085;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            pointer-events: none;
+        }
+
+        .global-toast {
+            min-width: 260px;
+            max-width: 320px;
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            color: #fff;
+            font-size: 0.9rem;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.18);
+            display: flex;
+            align-items: flex-start;
+            gap: 0.65rem;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            pointer-events: auto;
+        }
+
+        .global-toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .global-toast-icon {
+            font-size: 1.05rem;
+            line-height: 1;
+            margin-top: 0.1rem;
+        }
+
+        .global-toast-success { background: linear-gradient(135deg, #198754, #0f5132); }
+        .global-toast-error { background: linear-gradient(135deg, #dc3545, #a71d2a); }
+        .global-toast-warning { background: linear-gradient(135deg, #ffc107, #fd7e14); color: #212529 !important; }
+        .global-toast-info { background: linear-gradient(135deg, #0dcaf0, #0b7285); }
     </style>
+
+    <script>
+        (function() {
+            const typeClassMap = {
+                success: 'global-toast-success',
+                error: 'global-toast-error',
+                warning: 'global-toast-warning',
+                info: 'global-toast-info'
+            };
+
+            const typeIconMap = {
+                success: 'fas fa-check-circle',
+                error: 'fas fa-times-circle',
+                warning: 'fas fa-exclamation-circle',
+                info: 'fas fa-info-circle'
+            };
+
+            function resolveContainer() {
+                let container = document.querySelector('.global-toast-container');
+                if (!container) {
+                    if (!document.body) {
+                        return null;
+                    }
+                    container = document.createElement('div');
+                    container.className = 'global-toast-container';
+                    document.body.appendChild(container);
+                }
+                return container;
+            }
+
+            window.showToast = function(message, type = 'info', options = {}) {
+                if (!message) {
+                    return;
+                }
+
+                if (!document.body) {
+                    document.addEventListener('DOMContentLoaded', function() {
+                        window.showToast(message, type, options);
+                    }, { once: true });
+                    return;
+                }
+
+                const duration = typeof options.duration === 'number' ? options.duration : 3000;
+                const normalizedType = typeClassMap[type] ? type : 'info';
+
+                const container = resolveContainer();
+                if (!container) {
+                    return;
+                }
+
+                const toastEl = document.createElement('div');
+                toastEl.className = `global-toast ${typeClassMap[normalizedType]}`;
+
+                const iconEl = document.createElement('span');
+                iconEl.className = `global-toast-icon ${typeIconMap[normalizedType] ?? typeIconMap.info}`;
+
+                const messageEl = document.createElement('div');
+                messageEl.className = 'global-toast-message flex-grow-1';
+                messageEl.textContent = typeof message === 'string' ? message : String(message);
+
+                toastEl.appendChild(iconEl);
+                toastEl.appendChild(messageEl);
+
+                container.appendChild(toastEl);
+
+                requestAnimationFrame(() => {
+                    toastEl.classList.add('show');
+                });
+
+                const autoHide = setTimeout(() => {
+                    toastEl.classList.remove('show');
+                    toastEl.addEventListener('transitionend', () => {
+                        toastEl.remove();
+                    }, { once: true });
+                }, duration);
+
+                toastEl.addEventListener('click', () => {
+                    clearTimeout(autoHide);
+                    toastEl.classList.remove('show');
+                    toastEl.addEventListener('transitionend', () => {
+                        toastEl.remove();
+                    }, { once: true });
+                });
+            };
+        })();
+    </script>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -292,21 +422,6 @@
             <div class="col-md-10">
                 @endif
                 
-                <!-- Flash Messages -->
-                @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-                @endif
-                
-                @if(session('error'))
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    {{ session('error') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-                @endif
-
                 <!-- Page Content -->
                 <main class="py-4">
                     @yield('content')
@@ -352,6 +467,26 @@
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            @if(session('success'))
+                showToast(@json(session('success')), 'success');
+            @endif
+
+            @if(session('error'))
+                showToast(@json(session('error')), 'error');
+            @endif
+
+            @if(session('warning'))
+                showToast(@json(session('warning')), 'warning');
+            @endif
+
+            @if(session('info'))
+                showToast(@json(session('info')), 'info');
+            @endif
+        });
+    </script>
     
     @stack('scripts')
 </body>
