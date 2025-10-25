@@ -72,9 +72,15 @@
                                 </td>
                                 <td>{{ $faculty->email }}</td>
                                 <td>
-                                    <span class="badge bg-info">
-                                        {{ $faculty->faculty_type ? ucfirst($faculty->faculty_type) : 'Regular' }}
-                                    </span>
+                                    @php
+                                        $typeValue = $faculty->faculty_type;
+                                        $typeLabel = match ($typeValue) {
+                                            'regular', 'full-time' => 'Full-time',
+                                            'part-time', 'part_time' => 'Part-time',
+                                            default => 'Full-time',
+                                        };
+                                    @endphp
+                                    <span class="badge bg-info">{{ $typeLabel }}</span>
                                 </td>
                                 <td>
                                     @php
@@ -179,6 +185,16 @@
                             <div class="mb-3">
                                 <label class="form-label">Full Name <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="faculty_name" name="name" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Faculty Type <span class="text-danger">*</span></label>
+                                <select class="form-control" id="faculty_type" name="faculty_type" required>
+                                    <option value="">Select Faculty Type</option>
+                                    <option value="regular">Full-time</option>
+                                    <option value="part-time">Part-time</option>
+                                </select>
                                 <div class="invalid-feedback"></div>
                             </div>
                         </div>

@@ -39,7 +39,15 @@
                                         </div>
                                         <div class="col-sm-6">
                                             <p><strong>Department:</strong> {{ $facultyUser->department->name ?? 'N/A' }}</p>
-                                            <p><strong>Faculty Type:</strong> {{ ucfirst($facultyUser->faculty_type ?? 'N/A') }}</p>
+                                            @php
+                                                $typeValue = $facultyUser->faculty_type;
+                                                $typeLabel = match ($typeValue) {
+                                                    'regular', 'full-time' => 'Full-time',
+                                                    'part-time', 'part_time' => 'Part-time',
+                                                    default => 'N/A',
+                                                };
+                                            @endphp
+                                            <p><strong>Faculty Type:</strong> {{ $typeLabel }}</p>
                                         </div>
                                     </div>
                                 </div>

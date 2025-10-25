@@ -104,8 +104,7 @@
                                     <label for="faculty_type" class="form-label">Faculty Type</label>
                                     <select name="faculty_type" id="faculty_type" class="form-control @error('faculty_type') is-invalid @enderror">
                                         <option value="">Not applicable</option>
-                                        <option value="regular" {{ old('faculty_type', $user->faculty_type) == 'regular' ? 'selected' : '' }}>Regular</option>
-                                        <option value="visiting" {{ old('faculty_type', $user->faculty_type) == 'visiting' ? 'selected' : '' }}>Visiting</option>
+                                        <option value="regular" {{ old('faculty_type', $user->faculty_type) == 'regular' ? 'selected' : '' }}>Full-time</option>
                                         <option value="part-time" {{ old('faculty_type', $user->faculty_type) == 'part-time' ? 'selected' : '' }}>Part-time</option>
                                     </select>
                                     @error('faculty_type')
@@ -213,14 +212,25 @@
 <script>
 // Show/hide faculty type based on role selection
 document.getElementById('role_id').addEventListener('change', function() {
-    const facultyTypeDiv = document.getElementById('faculty_type').closest('.mb-3');
-    const selectedRole = this.options[this.selectedIndex].text.toLowerCase();
-    
-    if (selectedRole.includes('faculty')) {
-        facultyTypeDiv.style.display = 'block';
+    const facultyTypeField = document.getElementById('faculty_type');
+    const facultyTypeDiv = facultyTypeField.closest('.mb-3');
+    const selectedRole = this.options[this.selectedIndex].text.trim();
+    const isFaculty = selectedRole === 'Faculty';
+    const isProgramHead = selectedRole === 'Program Head';
+
+    facultyTypeDiv.style.display = isFaculty ? 'block' : 'none';
+
+    if (isFaculty) {
+        facultyTypeField.disabled = false;
+        return;
+    }
+
+    if (isProgramHead) {
+        facultyTypeField.value = 'regular';
+        facultyTypeField.disabled = false;
     } else {
-        facultyTypeDiv.style.display = 'none';
-        document.getElementById('faculty_type').value = '';
+        facultyTypeField.value = '';
+        facultyTypeField.disabled = true;
     }
 });
 

@@ -129,9 +129,17 @@
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label fw-bold">Faculty Type:</label>
+                                        @php
+                                            $typeValue = $user->faculty_type;
+                                            $typeLabel = match ($typeValue) {
+                                                'regular', 'full-time' => 'Full-time',
+                                                'part-time', 'part_time' => 'Part-time',
+                                                default => null,
+                                            };
+                                        @endphp
                                         <p class="mb-0">
-                                            @if($user->faculty_type)
-                                                <span class="badge bg-info">{{ ucfirst($user->faculty_type) }}</span>
+                                            @if($typeLabel)
+                                                <span class="badge bg-info">{{ $typeLabel }}</span>
                                             @else
                                                 <span class="text-muted">Not applicable</span>
                                             @endif

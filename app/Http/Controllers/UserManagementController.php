@@ -121,6 +121,24 @@ class UserManagementController extends Controller
             ])->withInput();
         }
         
+        $departmentId = $request->department_id;
+        $programId = $request->program_id;
+
+        $facultyTypeRule = 'nullable|in:regular,part-time';
+        if ($selectedRole && $selectedRole->name === 'Faculty') {
+            $facultyTypeRule = 'required|in:regular,part-time';
+        }
+
+        if ($selectedRole) {
+            if (in_array($selectedRole->name, ['MIS', 'VPAA'])) {
+                $departmentId = null;
+            }
+
+            if ($selectedRole->name === 'Dean') {
+                $programId = null;
+            }
+        }
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users|ends_with:@brokenshire.edu.ph',
@@ -134,20 +152,29 @@ class UserManagementController extends Controller
             'role_id' => 'required|exists:roles,id',
             'department_id' => 'nullable|exists:departments,id',
             'program_id' => 'nullable|exists:programs,id',
-            'faculty_type' => 'nullable|in:regular,visiting,part-time'
+            'faculty_type' => $facultyTypeRule
         ], [
             'email.ends_with' => 'Email must be a @brokenshire.edu.ph address.',
             'password.regex' => 'Password must contain at least one uppercase letter, one lowercase letter, and one number.'
         ]);
+
+        $facultyType = null;
+        if ($selectedRole) {
+            if ($selectedRole->name === 'Program Head') {
+                $facultyType = 'regular';
+            } elseif ($selectedRole->name === 'Faculty') {
+                $facultyType = $request->faculty_type;
+            }
+        }
         
         $newUser = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role_id' => $request->role_id,
-            'department_id' => $request->department_id,
-            'program_id' => $request->program_id,
-            'faculty_type' => $request->faculty_type,
+            'department_id' => $departmentId,
+            'program_id' => $programId,
+            'faculty_type' => $facultyType,
         ]);
         
         // Log user creation activity
@@ -159,7 +186,7 @@ class UserManagementController extends Controller
                 'created_user_email' => $newUser->email,
                 'created_user_role' => Role::find($request->role_id)->name ?? 'Unknown',
                 'created_user_department' => $request->department_id ? Department::find($request->department_id)->name : null,
-                'faculty_type' => $request->faculty_type
+                'faculty_type' => $facultyType
             ]
         );
         
@@ -217,22 +244,53 @@ class UserManagementController extends Controller
             return redirect()->back()->withErrors(['role_id' => 'MIS cannot assign Faculty role to users.'])->withInput();
         }
         
+        $facultyTypeRule = 'nullable|in:regular,part-time';
+        if ($selectedRole && $selectedRole->name === 'Faculty') {
+            $facultyTypeRule = 'required|in:regular,part-time';
+        }
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'role_id' => 'required|exists:roles,id',
             'department_id' => 'nullable|exists:departments,id',
-            'faculty_type' => 'nullable|in:regular,visiting,part-time',
+            'faculty_type' => $facultyTypeRule,
             'password' => 'nullable|string|min:8|confirmed'
         ]);
         
+        $departmentId = $request->department_id;
+        $programId = $request->program_id;
+
+        if ($selectedRole) {
+            if (in_array($selectedRole->name, ['MIS', 'VPAA'])) {
+                $departmentId = null;
+            }
+
+            if ($selectedRole->name === 'Dean') {
+                $programId = null;
+            }
+        }
+
+        $facultyType = null;
+        if ($selectedRole) {
+            if ($selectedRole->name === 'Program Head') {
+                $facultyType = 'regular';
+            } elseif ($selectedRole->name === 'Faculty') {
+                $facultyType = $request->faculty_type;
+            }
+        }
+
         $updateData = [
             'name' => $request->name,
             'email' => $request->email,
             'role_id' => $request->role_id,
-            'department_id' => $request->department_id,
-            'faculty_type' => $request->faculty_type,
+            'department_id' => $departmentId,
+            'faculty_type' => $facultyType,
         ];
+
+        if (array_key_exists('program_id', $user->getAttributes())) {
+            $updateData['program_id'] = $programId;
+        }
 
         // Handle password update
         if ($request->filled('password')) {

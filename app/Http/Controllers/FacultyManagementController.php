@@ -184,7 +184,7 @@ class FacultyManagementController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $faculty->id,
-            'faculty_type' => 'required|in:regular,visiting,part-time',
+            'faculty_type' => 'required|in:regular,part-time',
         ]);
         
         $faculty->update([
@@ -458,6 +458,7 @@ class FacultyManagementController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:8|confirmed',
+            'faculty_type' => 'required|in:regular,part-time',
         ]);
         
         try {
@@ -477,6 +478,7 @@ class FacultyManagementController extends Controller
                 'program_id' => null, // Faculty users don't have direct program assignment
                 'is_active' => true,
                 'email_verified_at' => now(),
+                'faculty_type' => $request->faculty_type,
             ]);
             
             // Note: Faculty assignments (subject assignments) will be created separately
@@ -489,6 +491,7 @@ class FacultyManagementController extends Controller
                     'id' => $faculty->id,
                     'name' => $faculty->name,
                     'email' => $faculty->email,
+                    'faculty_type' => $faculty->faculty_type,
                 ]
             ]);
             

@@ -312,8 +312,7 @@
                             <label for="faculty_type" class="form-label">Faculty Type</label>
                             <select class="form-control" id="faculty_type" name="faculty_type">
                                 <option value="">Select Type</option>
-                                <option value="regular">Regular</option>
-                                <option value="visiting">Visiting</option>
+                                <option value="regular">Full-time</option>
                                 <option value="part-time">Part-time</option>
                             </select>
                             <div class="invalid-feedback"></div>
@@ -393,34 +392,79 @@ document.addEventListener('DOMContentLoaded', function() {
     const programSelect = document.getElementById('program_id');
     const programContainer = document.getElementById('program-container');
     const facultyTypeContainer = document.getElementById('faculty-type-container');
+    const facultyTypeSelect = document.getElementById('faculty_type');
     
     // Update hidden email field when username changes
     emailUsername.addEventListener('input', function() {
         emailHidden.value = this.value + '@brokenshire.edu.ph';
     });
     
-    // Show/hide program and faculty type based on role
-    roleSelect.addEventListener('change', function() {
-        const selectedRole = this.options[this.selectedIndex].text;
-        
-        if (selectedRole === 'Faculty' || selectedRole === 'Program Head') {
-            programContainer.style.display = 'block';
-            facultyTypeContainer.style.display = 'block';
-        } else if (selectedRole === 'Dean') {
-            programContainer.style.display = 'none';
-            facultyTypeContainer.style.display = 'none';
-            programSelect.value = '';
-        } else {
-            programContainer.style.display = 'none';
-            facultyTypeContainer.style.display = 'none';
+    function resetProgramOptions() {
+        programSelect.innerHTML = '<option value="">Select Program</option>';
+    }
+
+    function handleRoleChange() {
+        const selectedRole = roleSelect.options[roleSelect.selectedIndex]?.text?.trim() || '';
+        const disableDepartment = ['MIS', 'VPAA'].includes(selectedRole);
+        const showProgramContainer = ['Faculty', 'Program Head', 'Dean'].includes(selectedRole);
+        const requireProgramSelection = ['Faculty', 'Program Head'].includes(selectedRole);
+        const isFaculty = selectedRole === 'Faculty';
+        const isProgramHead = selectedRole === 'Program Head';
+
+        departmentSelect.disabled = disableDepartment;
+        departmentSelect.classList.toggle('bg-light', disableDepartment);
+
+        if (disableDepartment) {
+            departmentSelect.value = '';
+            resetProgramOptions();
+        }
+
+        programContainer.style.display = showProgramContainer ? 'block' : 'none';
+        programSelect.disabled = !requireProgramSelection || !departmentSelect.value;
+
+        if (!requireProgramSelection) {
             programSelect.value = '';
         }
+
+        if (!showProgramContainer || !requireProgramSelection) {
+            resetProgramOptions();
+        } else if (departmentSelect.value) {
+            departmentSelect.dispatchEvent(new Event('change'));
+        }
+
+        facultyTypeContainer.style.display = isFaculty ? 'block' : 'none';
+
+        if (isFaculty) {
+            facultyTypeSelect.disabled = false;
+        } else if (isProgramHead) {
+            facultyTypeSelect.value = 'regular';
+            facultyTypeSelect.disabled = false;
+        } else {
+            facultyTypeSelect.value = '';
+            facultyTypeSelect.disabled = true;
+        }
+    }
+
+    // Show/hide program and faculty type based on role
+    roleSelect.addEventListener('change', function() {
+        handleRoleChange();
     });
     
     // Update programs when department changes
     departmentSelect.addEventListener('change', function() {
+        if (departmentSelect.disabled) {
+            return;
+        }
+
+        const activeRole = roleSelect.options[roleSelect.selectedIndex]?.text?.trim() || '';
+        if (!['Faculty', 'Program Head'].includes(activeRole)) {
+            resetProgramOptions();
+            programSelect.disabled = true;
+            return;
+        }
+
         const departmentId = this.value;
-        programSelect.innerHTML = '<option value="">Select Program</option>';
+        resetProgramOptions();
         
         if (departmentId) {
             const departments = @json($departments);
@@ -433,10 +477,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     option.textContent = program.name;
                     programSelect.appendChild(option);
                 });
+
+                programSelect.disabled = selectedDept.programs.length === 0;
+            } else {
+                programSelect.disabled = true;
             }
+        } else {
+            programSelect.disabled = true;
         }
     });
     
+    // Initialize form state
+    handleRoleChange();
+
     // Password validation
     const password = document.getElementById('password');
     const passwordConfirm = document.getElementById('password_confirmation');
