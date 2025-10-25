@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Role;
 use App\Models\Department;
 use App\Traits\LogsUserActivity;
+use Illuminate\Support\Facades\DB;
 
 class UserManagementController extends Controller
 {
@@ -16,7 +17,7 @@ class UserManagementController extends Controller
     /**
      * Display user management dashboard
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
         
@@ -24,24 +25,72 @@ class UserManagementController extends Controller
         if ($user->role->name !== 'MIS') {
             abort(403, 'Unauthorized access');
         }
-        
-        $users = User::with(['role', 'department'])->paginate(15);
+
+        $filters = [
+            'search' => $request->input('search'),
+            'role' => $request->input('role'),
+            'department' => $request->input('department'),
+            'status' => $request->input('status'),
+        ];
+
+        $activeUserIds = DB::table('sessions')
+            ->whereNotNull('user_id')
+            ->pluck('user_id')
+            ->filter()
+            ->unique()
+            ->values()
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $userQuery = User::query()->with(['role', 'department']);
+
+        if ($filters['search'] !== null && $filters['search'] !== '') {
+            $search = $filters['search'];
+            $userQuery->where(function ($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%")
+                      ->orWhere('id', $search);
+            });
+        }
+
+        if (!empty($filters['role'])) {
+            $userQuery->where('role_id', $filters['role']);
+        }
+
+        if (!empty($filters['department'])) {
+            $userQuery->where('department_id', $filters['department']);
+        }
+
+        if (!empty($filters['status'])) {
+            if ($filters['status'] === 'active') {
+                if (empty($activeUserIds)) {
+                    $userQuery->whereRaw('1 = 0');
+                } else {
+                    $userQuery->whereIn('id', $activeUserIds);
+                }
+            } elseif ($filters['status'] === 'inactive') {
+                if (!empty($activeUserIds)) {
+                    $userQuery->whereNotIn('id', $activeUserIds);
+                }
+            }
+        }
+
+        $users = $userQuery->orderBy('name')->paginate(15)->appends($request->query());
         
         // Get roles and departments for the modal - exclude Faculty role as MIS cannot create faculty users
         $roles = Role::where('name', '!=', 'Faculty')->get();
         $departments = Department::with('programs')->get();
+        $filterRoles = Role::orderBy('name')->get();
         
         // Calculate statistics
         $stats = [
             'total' => User::count(),
-            'active' => User::whereNotNull('last_login_at')
-                           ->where('last_login_at', '>', now()->subDays(30))
-                           ->count(),
+            'active' => count($activeUserIds),
             'mis' => User::whereHas('role', function($q) { $q->where('name', 'MIS'); })->count(),
             'faculty' => User::whereHas('role', function($q) { $q->where('name', 'Faculty'); })->count(),
         ];
         
-        return view('user-management.index', compact('users', 'stats', 'roles', 'departments'));
+        return view('user-management.index', compact('users', 'stats', 'roles', 'departments', 'filterRoles', 'filters', 'activeUserIds'));
     }
 
     /**

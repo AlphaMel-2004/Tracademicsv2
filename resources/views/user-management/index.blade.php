@@ -79,9 +79,70 @@
             <!-- Users List -->
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0">System Users</h5>
+                    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+                        <h5 class="mb-0">System Users</h5>
+                        <form method="GET" action="{{ route('users.index') }}" class="w-100">
+                            <div class="row g-2">
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label small text-muted">Search by name, email, or ID</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                        <input type="text" name="search" class="form-control" placeholder="Search users..." value="{{ $filters['search'] ?? '' }}">
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <label class="form-label small text-muted">Role</label>
+                                    <select name="role" class="form-select">
+                                        <option value="">All Roles</option>
+                                        @foreach($filterRoles as $roleOption)
+                                            <option value="{{ $roleOption->id }}" {{ ($filters['role'] ?? '') == $roleOption->id ? 'selected' : '' }}>
+                                                {{ $roleOption->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <label class="form-label small text-muted">Department</label>
+                                    <select name="department" class="form-select">
+                                        <option value="">All Departments</option>
+                                        @foreach($departments as $departmentOption)
+                                            <option value="{{ $departmentOption->id }}" {{ ($filters['department'] ?? '') == $departmentOption->id ? 'selected' : '' }}>
+                                                {{ $departmentOption->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-lg-2 col-md-6">
+                                    <label class="form-label small text-muted">Status</label>
+                                    <select name="status" class="form-select">
+                                        <option value="">All</option>
+                                        <option value="active" {{ ($filters['status'] ?? '') === 'active' ? 'selected' : '' }}>Active</option>
+                                        <option value="inactive" {{ ($filters['status'] ?? '') === 'inactive' ? 'selected' : '' }}>Inactive</option>
+                                    </select>
+                                </div>
+                                <div class="col-lg-2 col-md-6 d-flex align-items-end gap-2">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-search me-1"></i>Filter
+                                    </button>
+                                    <a href="{{ route('users.index') }}" class="btn btn-outline-secondary" title="Reset filters">
+                                        <i class="fas fa-undo"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
                 </div>
                 <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center flex-column flex-sm-row mb-3">
+                        <div class="text-muted small">
+                            Showing <strong>{{ $users->firstItem() ?? 0 }}-{{ $users->lastItem() ?? 0 }}</strong> of <strong>{{ $users->total() }}</strong> users
+                        </div>
+                        @if(!empty(array_filter($filters)))
+                            <div class="badge bg-light text-dark">
+                                <i class="fas fa-filter me-1"></i>Active filters applied
+                            </div>
+                        @endif
+                    </div>
                     <div class="table-responsive">
                         <table class="table table-striped">
                             <thead>
@@ -122,10 +183,13 @@
                                         @endif
                                     </td>
                                     <td>
-                                        @if($user->email_verified_at)
+                                        @php
+                                            $isActive = in_array($user->id, $activeUserIds ?? []);
+                                        @endphp
+                                        @if($isActive)
                                             <span class="badge bg-success">Active</span>
                                         @else
-                                            <span class="badge bg-warning">Pending</span>
+                                            <span class="badge bg-secondary">Inactive</span>
                                         @endif
                                     </td>
                                     <td>
