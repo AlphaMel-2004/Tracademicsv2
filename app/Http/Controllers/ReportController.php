@@ -13,9 +13,11 @@ use App\Models\Program;
 use App\Models\Semester;
 use App\Models\FacultySemesterCompliance;
 use App\Models\SubjectCompliance;
+use App\Models\ComplianceSubmission;
 use App\Models\FacultyAssignment;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\File;
 
 class ReportController extends Controller
 {
@@ -406,6 +408,12 @@ class ReportController extends Controller
         // Get detailed compliance data for each program
         $programs = $department->programs()->get();
         
+        $letterheadImage = null;
+        $letterheadPath = public_path('images/letter_header.png');
+        if (File::exists($letterheadPath)) {
+            $letterheadImage = 'data:image/png;base64,' . base64_encode(File::get($letterheadPath));
+        }
+
         $reportData = [
             'department' => $department,
             'generated_at' => now(),
@@ -524,7 +532,8 @@ class ReportController extends Controller
                     'total_faculty' => $facultyData->count(),
                     'avg_compliance_rate' => $facultyData->avg('compliance_rate') ?? 0
                 ];
-            })
+            }),
+            'letterhead_image' => $letterheadImage,
         ];
         
         // Generate PDF using a view

@@ -13,11 +13,17 @@
         .header {
             text-align: center;
             margin-bottom: 25px;
-            border-bottom: 2px solid #007bff;
+            border-bottom: 2px solid #28a745;
             padding-bottom: 15px;
         }
+        .letterhead {
+            width: 100%;
+            max-height: 120px;
+            object-fit: contain;
+            margin-bottom: 10px;
+        }
         .header h1 {
-            color: #007bff;
+            color: #28a745;
             margin: 0 0 5px 0;
             font-size: 20px;
         }
@@ -116,6 +122,9 @@
 </head>
 <body>
     <div class="header">
+        @if(!empty($letterhead_image))
+            <img src="{{ $letterhead_image }}" alt="Brokenshire College Letterhead" class="letterhead">
+        @endif
         <h1>{{ $department->name }}</h1>
         <h2>Faculty Compliance Detailed Report</h2>
     </div>
@@ -168,11 +177,9 @@
                 <table>
                     <thead>
                         <tr>
-                            <th style="width: 25%;">Document Type</th>
-                            <th style="width: 15%;">Status</th>
-                            <th style="width: 30%;">Evidence Link</th>
-                            <th style="width: 15%;">Approval Status</th>
-                            <th style="width: 15%;">Compliance</th>
+                            <th style="width: 45%;">Document Type</th>
+                            <th style="width: 25%;">Status</th>
+                            <th style="width: 30%;">Approval Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -191,13 +198,6 @@
                                     <span class="badge-danger">Not Complied</span>
                                 @endif
                             </td>
-                            <td>
-                                @if($compliance->evidence_link)
-                                    <small>{{ Str::limit($compliance->evidence_link, 35) }}</small>
-                                @else
-                                    <span class="text-muted">No link provided</span>
-                                @endif
-                            </td>
                             <td class="text-center">
                                 @if($compliance->approval_status === 'approved')
                                     <span class="badge-success">Approved</span>
@@ -207,13 +207,6 @@
                                     <span class="badge-warning">Pending</span>
                                 @else
                                     <span class="badge-secondary">Not Reviewed</span>
-                                @endif
-                            </td>
-                            <td class="text-center">
-                                @if($compliance->self_evaluation_status === 'Complied')
-                                    <span class="text-success">✓</span>
-                                @else
-                                    <span class="text-danger">✗</span>
                                 @endif
                             </td>
                         </tr>
@@ -232,11 +225,9 @@
                         <table style="margin-top: 4px;">
                             <thead>
                                 <tr>
-                                    <th style="width: 25%;">Document Type</th>
-                                    <th style="width: 15%;">Status</th>
-                                    <th style="width: 30%;">Evidence Link</th>
-                                    <th style="width: 15%;">Approval Status</th>
-                                    <th style="width: 15%;">Compliance</th>
+                                    <th style="width: 45%;">Document Type</th>
+                                    <th style="width: 25%;">Status</th>
+                                    <th style="width: 30%;">Approval Status</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -255,13 +246,6 @@
                                             <span class="badge-danger">Not Complied</span>
                                         @endif
                                     </td>
-                                    <td>
-                                        @if($compliance->evidence_link)
-                                            <small>{{ Str::limit($compliance->evidence_link, 30) }}</small>
-                                        @else
-                                            <span class="text-muted">No link provided</span>
-                                        @endif
-                                    </td>
                                     <td class="text-center">
                                         @if($compliance->approval_status === 'approved')
                                             <span class="badge-success">Approved</span>
@@ -271,13 +255,6 @@
                                             <span class="badge-warning">Pending</span>
                                         @else
                                             <span class="badge-secondary">Not Reviewed</span>
-                                        @endif
-                                    </td>
-                                    <td class="text-center">
-                                        @if($compliance->self_evaluation_status === 'Complied')
-                                            <span class="text-success">✓</span>
-                                        @else
-                                            <span class="text-danger">✗</span>
                                         @endif
                                     </td>
                                 </tr>

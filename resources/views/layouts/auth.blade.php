@@ -252,6 +252,50 @@
             margin-bottom: 1rem;
             padding: 12px 16px;
         }
+
+        .global-toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1085;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            pointer-events: none;
+        }
+
+        .global-toast {
+            min-width: 240px;
+            max-width: 320px;
+            padding: 0.7rem 0.95rem;
+            border-radius: 0.75rem;
+            color: #fff;
+            font-size: 0.9rem;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.18);
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            opacity: 0;
+            transform: translateY(-8px);
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            pointer-events: auto;
+        }
+
+        .global-toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .global-toast-icon {
+            font-size: 1rem;
+            line-height: 1;
+            margin-top: 0.1rem;
+        }
+
+        .global-toast-success { background: linear-gradient(135deg, #198754, #0f5132); }
+        .global-toast-error { background: linear-gradient(135deg, #dc3545, #a71d2a); }
+        .global-toast-warning { background: linear-gradient(135deg, #ffc107, #fd7e14); color: #212529 !important; }
+        .global-toast-info { background: linear-gradient(135deg, #0dcaf0, #0b7285); }
         
         @media (max-width: 768px) {
             .auth-container {
@@ -269,6 +313,92 @@
         }
     </style>
 
+    <script>
+        (function() {
+            const typeClassMap = {
+                success: 'global-toast-success',
+                error: 'global-toast-error',
+                warning: 'global-toast-warning',
+                info: 'global-toast-info'
+            };
+
+            const typeIconMap = {
+                success: 'fas fa-check-circle',
+                error: 'fas fa-times-circle',
+                warning: 'fas fa-exclamation-circle',
+                info: 'fas fa-info-circle'
+            };
+
+            function resolveContainer() {
+                let container = document.querySelector('.global-toast-container');
+                if (!container) {
+                    if (!document.body) {
+                        return null;
+                    }
+                    container = document.createElement('div');
+                    container.className = 'global-toast-container';
+                    document.body.appendChild(container);
+                }
+                return container;
+            }
+
+            window.showToast = function(message, type = 'info', options = {}) {
+                if (!message) {
+                    return;
+                }
+
+                if (!document.body) {
+                    document.addEventListener('DOMContentLoaded', function() {
+                        window.showToast(message, type, options);
+                    }, { once: true });
+                    return;
+                }
+
+                const duration = typeof options.duration === 'number' ? options.duration : 3000;
+                const normalizedType = typeClassMap[type] ? type : 'info';
+
+                const container = resolveContainer();
+                if (!container) {
+                    return;
+                }
+
+                const toastEl = document.createElement('div');
+                toastEl.className = `global-toast ${typeClassMap[normalizedType]}`;
+
+                const iconEl = document.createElement('span');
+                iconEl.className = `global-toast-icon ${typeIconMap[normalizedType] ?? typeIconMap.info}`;
+
+                const messageEl = document.createElement('div');
+                messageEl.className = 'global-toast-message flex-grow-1';
+                messageEl.textContent = typeof message === 'string' ? message : String(message);
+
+                toastEl.appendChild(iconEl);
+                toastEl.appendChild(messageEl);
+
+                container.appendChild(toastEl);
+
+                requestAnimationFrame(() => {
+                    toastEl.classList.add('show');
+                });
+
+                const autoHide = setTimeout(() => {
+                    toastEl.classList.remove('show');
+                    toastEl.addEventListener('transitionend', () => {
+                        toastEl.remove();
+                    }, { once: true });
+                }, duration);
+
+                toastEl.addEventListener('click', () => {
+                    clearTimeout(autoHide);
+                    toastEl.classList.remove('show');
+                    toastEl.addEventListener('transitionend', () => {
+                        toastEl.remove();
+                    }, { once: true });
+                });
+            };
+        })();
+    </script>
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body>
@@ -277,5 +407,41 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+    @php
+        $authFlashMessages = [
+            'success' => session('success'),
+            'status' => session('status'),
+            'error' => session('error'),
+            'warning' => session('warning'),
+            'info' => session('info'),
+        ];
+    @endphp
+    <script type="application/json" id="auth-flash-messages-data">
+        {!! json_encode($authFlashMessages, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!}
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const flashDataEl = document.getElementById('auth-flash-messages-data');
+            let flashMessages = {};
+
+            if (flashDataEl) {
+                try {
+                    flashMessages = JSON.parse(flashDataEl.textContent || '{}');
+                } catch (error) {
+                    flashMessages = {};
+                }
+            }
+
+            Object.entries(flashMessages).forEach(function([type, message]) {
+                if (!message) {
+                    return;
+                }
+
+                const toastType = type === 'status' ? 'success' : type;
+                showToast(message, toastType);
+            });
+        });
+    </script>
 </body>
 </html>

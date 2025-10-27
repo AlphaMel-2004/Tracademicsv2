@@ -203,6 +203,50 @@
         .global-toast-error { background: linear-gradient(135deg, #dc3545, #a71d2a); }
         .global-toast-warning { background: linear-gradient(135deg, #ffc107, #fd7e14); color: #212529 !important; }
         .global-toast-info { background: linear-gradient(135deg, #0dcaf0, #0b7285); }
+
+        .mobile-sidebar-wrapper .nav-link {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .mobile-sidebar-wrapper .nav-link:last-child {
+            border-bottom: none;
+        }
+
+        .mobile-sidebar-wrapper .nav-link.active {
+            font-weight: 600;
+        }
+
+        @media (max-width: 991.98px) {
+            .sidebar {
+                min-height: auto;
+            }
+
+            .navbar-brand {
+                font-size: 1rem;
+            }
+
+            .navbar-brand img {
+                width: 20px !important;
+                height: 20px !important;
+            }
+
+            main.py-4 {
+                padding-top: 1.5rem !important;
+            }
+
+            .card {
+                margin-bottom: 1rem;
+            }
+
+            .global-toast-container {
+                top: 0.75rem;
+                right: 0.75rem;
+            }
+        }
     </style>
 
     <script>
@@ -301,25 +345,30 @@
                 <img src="{{ asset('images/tracademics-logo.png') }}" alt="TracAdemics" class="me-2" style="height: 32px;">
                 TracAdemics
             </a>
-            
+
             @auth
-            <div class="navbar-nav ms-auto">
-                <div class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-user me-1"></i>
-                        {{ Auth::user()->name }}
-                        <span class="badge bg-primary ms-2">{{ Auth::user()->role->name }}</span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="{{ route('profile.show') }}"><i class="fas fa-user-cog me-2"></i>Profile</a></li>
-                        <li><a class="dropdown-item" href="{{ route('profile.password') }}"><i class="fas fa-lock me-2"></i>Password Settings</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#logoutModal">
-                                <i class="fas fa-sign-out-alt me-2"></i>Logout
-                            </button>
-                        </li>
-                    </ul>
+            <div class="d-flex align-items-center ms-auto gap-2">
+                <button class="btn btn-outline-primary d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar" aria-label="Toggle navigation">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="navbar-nav">
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>
+                            {{ Auth::user()->name }}
+                            <span class="badge bg-primary ms-2">{{ Auth::user()->role->name }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ route('profile.show') }}"><i class="fas fa-user-cog me-2"></i>Profile</a></li>
+                            <li><a class="dropdown-item" href="{{ route('profile.password') }}"><i class="fas fa-lock me-2"></i>Password Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#logoutModal">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
             @endauth
@@ -331,107 +380,40 @@
         <div class="row">
             @auth
             <!-- Sidebar -->
-            <div class="col-md-2 p-0">
+            <div class="col-md-2 p-0 d-none d-md-block">
                 <div class="sidebar p-3">
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
-                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
-                            </a>
-                        </li>
-                        
-                        @if(Auth::user()->role->name === 'VPAA')
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('monitor.*') ? 'active' : '' }}" href="{{ route('monitor.index') }}">
-                                <i class="fas fa-monitor me-2"></i>Monitor
-                            </a>
-                        </li>
-                        @endif
-                        
-                        @if(Auth::user()->role->name === 'Dean')
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('monitor.faculty.*') ? 'active' : '' }}" href="{{ route('monitor.faculty') }}">
-                                <i class="fas fa-users me-2"></i>Monitor Faculty
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}" href="{{ route('reports.dean') }}">
-                                <i class="fas fa-file-pdf me-2"></i>Reports
-                            </a>
-                        </li>
-                        @endif
-                        
-                        @if(Auth::user()->role->name === 'Program Head')
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('monitor.compliance.*') ? 'active' : '' }}" href="{{ route('monitor.compliance') }}">
-                                <i class="fas fa-clipboard-check me-2"></i>Monitor Compliances
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('faculty.manage.*') ? 'active' : '' }}" href="{{ route('faculty.manage') }}">
-                                <i class="fas fa-users-cog me-2"></i>Manage Faculty
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('subjects.*') ? 'active' : '' }}" href="{{ route('subjects.index') }}">
-                                <i class="fas fa-book me-2"></i>Subject Management
-                            </a>
-                        </li>
-                        @endif
-                        
-                        @if(Auth::user()->role->name === 'Faculty')
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('subjects.assigned') ? 'active' : '' }}" href="{{ route('subjects.assigned') }}">
-                                <i class="fas fa-book-open me-2"></i>Subjects
-                            </a>
-                        </li>
-                        @endif
-                        
-                        @if(Auth::user()->role->name === 'MIS')
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">
-                                <i class="fas fa-users me-2"></i>User Management
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('departments.*') ? 'active' : '' }}" href="{{ route('departments.index') }}">
-                                <i class="fas fa-building me-2"></i>Department Management
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('programs-management.*') ? 'active' : '' }}" href="{{ route('programs-management.index') }}">
-                                <i class="fas fa-graduation-cap me-2"></i>Programs Management
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('settings.semesters*') ? 'active' : '' }}" href="{{ route('settings.semesters') }}">
-                                <i class="fas fa-calendar-alt me-2"></i>Semester Settings
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('settings.*') && !request()->routeIs('settings.semesters*') ? 'active' : '' }}" href="{{ route('settings.index') }}">
-                                <i class="fas fa-cogs me-2"></i>System Settings
-                            </a>
-                        </li>
-                        @endif
-                    </ul>
+                    @include('layouts.partials.sidebar-links')
                 </div>
             </div>
             
             <!-- Main Content Area -->
-            <div class="col-md-10">
-                @endif
-                
+            <div class="col-12 col-md-10">
+            @else
+            <div class="col-12">
+            @endauth
                 <!-- Page Content -->
                 <main class="py-4">
                     @yield('content')
                 </main>
-                
-                @auth
             </div>
-            @endauth
         </div>
     </div>
+
+    @auth
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="mobileSidebarLabel">
+                <i class="fas fa-bars me-2"></i>Navigation
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body p-0">
+            <div class="mobile-sidebar-wrapper p-3">
+                @include('layouts.partials.sidebar-links')
+            </div>
+        </div>
+    </div>
+    @endauth
 
     <!-- Logout Confirmation Modal -->
     <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
@@ -468,23 +450,48 @@
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
+    @php
+        $flashMessages = [
+            'success' => session('success'),
+            'error' => session('error'),
+            'warning' => session('warning'),
+            'info' => session('info'),
+        ];
+    @endphp
+    <script type="application/json" id="flash-messages-data">
+        {!! json_encode($flashMessages, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!}
+    </script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            @if(session('success'))
-                showToast(@json(session('success')), 'success');
-            @endif
+            const flashDataEl = document.getElementById('flash-messages-data');
+            let flashMessages = {};
 
-            @if(session('error'))
-                showToast(@json(session('error')), 'error');
-            @endif
+            if (flashDataEl) {
+                try {
+                    flashMessages = JSON.parse(flashDataEl.textContent || '{}');
+                } catch (error) {
+                    flashMessages = {};
+                }
+            }
 
-            @if(session('warning'))
-                showToast(@json(session('warning')), 'warning');
-            @endif
+            Object.entries(flashMessages).forEach(function([type, message]) {
+                if (message) {
+                    showToast(message, type);
+                }
+            });
 
-            @if(session('info'))
-                showToast(@json(session('info')), 'info');
-            @endif
+            const mobileSidebar = document.getElementById('mobileSidebar');
+            if (mobileSidebar) {
+                mobileSidebar.addEventListener('click', function(event) {
+                    const target = event.target.closest('.nav-link');
+                    if (target) {
+                        const offcanvasInstance = bootstrap.Offcanvas.getInstance(mobileSidebar);
+                        if (offcanvasInstance) {
+                            offcanvasInstance.hide();
+                        }
+                    }
+                });
+            }
         });
     </script>
     

@@ -33,14 +33,6 @@
                 @endforeach
             </div>
         @endif
-
-        <!-- Display Session Status -->
-        @if (session('status'))
-            <div class="alert alert-success">
-                {{ session('status') }}
-            </div>
-        @endif
-
         <form method="POST" action="{{ route('password.email') }}">
             @csrf
 

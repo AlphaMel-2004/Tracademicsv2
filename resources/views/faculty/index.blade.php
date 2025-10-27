@@ -12,14 +12,6 @@
                     <i class="fas fa-plus me-2"></i>Add Faculty
                 </a>
             </div>
-
-            @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-            @endif
-
             <div class="row mb-4">
                 <!-- Statistics Cards -->
                 <div class="col-md-3">

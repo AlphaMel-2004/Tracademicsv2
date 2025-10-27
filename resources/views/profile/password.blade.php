@@ -10,14 +10,6 @@
                     <i class="fas fa-arrow-left me-2"></i>Back to Profile
                 </a>
             </div>
-
-            @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-            @endif
-
             <div class="row justify-content-center">
                 <div class="col-md-6">
                     <div class="card">
