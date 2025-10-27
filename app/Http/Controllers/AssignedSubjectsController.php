@@ -24,14 +24,18 @@ class AssignedSubjectsController extends Controller
             abort(403, 'Unauthorized access');
         }
         
-        // Get subjects assigned to this faculty member
+        $currentSemester = Semester::where('is_active', true)->first();
+
+        // Get subjects assigned to this faculty member for the current semester
         $assignments = FacultyAssignment::where('user_id', $user->id)
+            ->when($currentSemester, function ($query) use ($currentSemester) {
+                $query->where('semester_id', $currentSemester->id);
+            })
             ->with(['subject', 'semester'])
             ->get();
-        
-        $subjects = $assignments->map(function ($assignment) use ($user) {
+
+        $subjects = $assignments->map(function ($assignment) use ($user, $currentSemester) {
             $subject = $assignment->subject;
-            $currentSemester = Semester::where('is_active', true)->first();
             
             // Get document types required for this subject
             $documentTypes = DocumentType::where('submission_type', 'subject')->get();
@@ -39,7 +43,9 @@ class AssignedSubjectsController extends Controller
             // Get existing submissions for this subject
             $submissions = SubjectCompliance::where('user_id', $user->id)
                 ->where('subject_id', $subject->id)
-                ->where('semester_id', $currentSemester ? $currentSemester->id : null)
+                ->when($currentSemester, function ($query) use ($currentSemester) {
+                    $query->where('semester_id', $currentSemester->id);
+                })
                 ->with('documentType')
                 ->get()
                 ->keyBy('document_type_id');
@@ -73,8 +79,7 @@ class AssignedSubjectsController extends Controller
         });
         
         // Get current semester and semester-wide compliance data
-        $currentSemester = Semester::where('is_active', true)->first();
-        $semesterCompliances = collect();
+    $semesterCompliances = collect();
         
         if ($currentSemester) {
             // Get semester document types
@@ -121,9 +126,14 @@ class AssignedSubjectsController extends Controller
             abort(403, 'Unauthorized access');
         }
         
-        // Verify this subject is assigned to the faculty member
+        $currentSemester = Semester::where('is_active', true)->first();
+
+        // Verify this subject is assigned to the faculty member for the active semester
         $assignment = FacultyAssignment::where('user_id', $user->id)
             ->where('subject_id', $subject->id)
+            ->when($currentSemester, function ($query) use ($currentSemester) {
+                $query->where('semester_id', $currentSemester->id);
+            })
             ->with('semester')
             ->first();
         
@@ -137,14 +147,15 @@ class AssignedSubjectsController extends Controller
         // Get existing subject compliance records
         $existingCompliances = SubjectCompliance::where('user_id', $user->id)
             ->where('subject_id', $subject->id)
+            ->when($currentSemester, function ($query) use ($currentSemester) {
+                $query->where('semester_id', $currentSemester->id);
+            })
             ->with('documentType')
             ->get()
             ->keyBy('document_type_id');
         
         // Create or get compliance records for each subject document type
         // Get current active semester
-        $currentSemester = Semester::where('is_active', true)->first();
-        
         $subjectCompliances = collect();
         foreach ($documentTypes as $docType) {
             if ($existingCompliances->has($docType->id)) {

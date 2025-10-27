@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             ProgramSeeder::class,
             SemesterSeeder::class,
             DocumentTypeSeeder::class,
+            SubjectSeeder::class,
             UserSeeder::class,
             FacultyAssignmentSeeder::class,
         ]);

@@ -337,7 +337,7 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body>
+<body data-user-role="{{ auth()->check() ? auth()->user()->role->name : 'Guest' }}">
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
         <div class="container-fluid">

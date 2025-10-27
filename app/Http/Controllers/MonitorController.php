@@ -608,9 +608,13 @@ class MonitorController extends Controller
                 $compliance->update(['approval_status' => 'approved']);
             }
 
+            $compliance->refresh();
+            $compliance->load(['documentType']);
+
             return response()->json([
                 'success' => true,
-                'message' => 'Semester compliance approved successfully'
+                'message' => 'Semester compliance approved successfully',
+                'compliance' => $compliance
             ]);
 
         } catch (\Exception $e) {
@@ -694,9 +698,13 @@ class MonitorController extends Controller
                 return response()->json(['error' => 'Unauthorized - Invalid role: ' . $user->role->name], 403);
             }
 
+            $compliance->refresh();
+            $compliance->load(['documentType']);
+
             return response()->json([
                 'success' => true,
-                'message' => 'Semester compliance marked for revision'
+                'message' => 'Semester compliance marked for revision',
+                'compliance' => $compliance
             ]);
 
         } catch (\Exception $e) {
@@ -783,9 +791,13 @@ class MonitorController extends Controller
                 $compliance->update(['approval_status' => 'approved']);
             }
 
+            $compliance->refresh();
+            $compliance->load(['documentType', 'subject']);
+
             return response()->json([
                 'success' => true,
-                'message' => 'Subject compliance approved successfully'
+                'message' => 'Subject compliance approved successfully',
+                'compliance' => $compliance
             ]);
 
         } catch (\Exception $e) {
@@ -866,9 +878,13 @@ class MonitorController extends Controller
                 return response()->json(['error' => 'Unauthorized - Invalid role: ' . $user->role->name], 403);
             }
 
+            $compliance->refresh();
+            $compliance->load(['documentType', 'subject']);
+
             return response()->json([
                 'success' => true,
-                'message' => 'Subject compliance marked for revision'
+                'message' => 'Subject compliance marked for revision',
+                'compliance' => $compliance
             ]);
 
         } catch (\Exception $e) {
