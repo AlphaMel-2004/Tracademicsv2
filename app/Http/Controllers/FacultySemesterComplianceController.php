@@ -14,7 +14,16 @@ class FacultySemesterComplianceController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'evidence_link' => 'nullable|url|max:500',
+            'evidence_link' => [
+                'nullable',
+                'url',
+                'max:500',
+                function ($attribute, $value, $fail) {
+                    if (!empty($value) && !$this->isValidGoogleDriveUrl($value)) {
+                        $fail('The evidence link must be a valid Google Drive or Google Docs URL.');
+                    }
+                },
+            ],
             'self_evaluation_status' => 'nullable|in:Complied,Not Complied',
         ]);
 
@@ -48,5 +57,50 @@ class FacultySemesterComplianceController extends Controller
             'data' => $compliance->fresh()->load('documentType'),
             'updated_fields' => $updateData
         ]);
+    }
+
+    /**
+     * Determine if the provided URL is a valid Google Drive/Docs link.
+     */
+    private function isValidGoogleDriveUrl(string $url): bool
+    {
+        $parsed = parse_url($url);
+
+        if (!$parsed || empty($parsed['host'])) {
+            return false;
+        }
+
+        $host = strtolower($parsed['host']);
+        if (str_starts_with($host, 'www.')) {
+            $host = substr($host, 4);
+        }
+
+        if (!in_array($host, ['drive.google.com', 'docs.google.com'], true)) {
+            return false;
+        }
+
+        $path = $parsed['path'] ?? '';
+        $patterns = [
+            '#^/file/d/([a-zA-Z0-9_-]+)(/|$)#',
+            '#^/document/d/([a-zA-Z0-9_-]+)(/|$)#',
+            '#^/spreadsheets/d/([a-zA-Z0-9_-]+)(/|$)#',
+            '#^/presentation/d/([a-zA-Z0-9_-]+)(/|$)#',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $path)) {
+                return true;
+            }
+        }
+
+        // Handle open?id= and uc?id= formats
+        if (in_array($path, ['/open', '/uc'], true) && !empty($parsed['query'])) {
+            parse_str($parsed['query'], $query);
+            if (!empty($query['id']) && preg_match('#^[a-zA-Z0-9_-]+$#', $query['id'])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

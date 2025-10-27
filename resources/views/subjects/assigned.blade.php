@@ -317,6 +317,43 @@
 </style>
 
 <script>
+function isValidGoogleDriveLink(url) {
+    if (!url) {
+        return true;
+    }
+
+    let parsed;
+    try {
+        parsed = new URL(url.trim());
+    } catch (error) {
+        return false;
+    }
+
+    const host = parsed.hostname.replace(/^www\./i, '').toLowerCase();
+    if (host !== 'drive.google.com' && host !== 'docs.google.com') {
+        return false;
+    }
+
+    const path = parsed.pathname || '';
+    const patterns = [
+        /^\/file\/d\/[a-zA-Z0-9_-]+\/?/,
+        /^\/document\/d\/[a-zA-Z0-9_-]+\/?/,
+        /^\/spreadsheets\/d\/[a-zA-Z0-9_-]+\/?/,
+        /^\/presentation\/d\/[a-zA-Z0-9_-]+\/?/
+    ];
+
+    if (patterns.some((pattern) => pattern.test(path))) {
+        return true;
+    }
+
+    if ((path === '/open' || path === '/uc')) {
+        const id = parsed.searchParams.get('id');
+        return !!id && /^[a-zA-Z0-9_-]+$/.test(id);
+    }
+
+    return false;
+}
+
 // Semester Compliance Table Handlers
 document.addEventListener('DOMContentLoaded', function() {
     // Auto-save on textarea change (with debounce)
@@ -358,6 +395,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const modal = document.getElementById('linkModal' + complianceId);
             const linkInput = modal.querySelector('.evidence-link-input');
             const link = linkInput.value.trim();
+
+            if (!isValidGoogleDriveLink(link)) {
+                showToast('Please enter a valid Google Drive or Google Docs link.', 'error');
+                return;
+            }
             
             // Update compliance with new link
             updateCompliance(complianceId, 'evidence_link', link, () => {
@@ -383,13 +425,22 @@ document.addEventListener('DOMContentLoaded', function() {
 function updateCompliance(complianceId, field, value, successCallback = null) {
     console.log('Updating compliance:', { complianceId, field, value });
     
+    if (field === 'evidence_link' && value && !isValidGoogleDriveLink(value)) {
+        showToast('Please enter a valid Google Drive or Google Docs link.', 'error');
+        return;
+    }
+
     // Prepare the data to send
     const data = {
         _method: 'PUT'
     };
     
     // Only send the field that's being updated
-    data[field] = value || '';
+    if (typeof value === 'string') {
+        data[field] = value.trim();
+    } else {
+        data[field] = value || '';
+    }
 
     console.log('Sending data:', data);
 
@@ -402,12 +453,23 @@ function updateCompliance(complianceId, field, value, successCallback = null) {
         },
         body: JSON.stringify(data)
     })
-    .then(response => {
+    .then(async (response) => {
         console.log('Response status:', response.status);
+        const payload = await response.json().catch(() => null);
+
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            let message = `Request failed with status ${response.status}`;
+            if (payload) {
+                if (payload.message) {
+                    message = payload.message;
+                } else if (payload.errors) {
+                    message = Object.values(payload.errors).flat().join(' ');
+                }
+            }
+            throw new Error(message);
         }
-        return response.json();
+
+        return payload;
     })
     .then(responseData => {
         console.log('Server response:', responseData);
