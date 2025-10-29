@@ -25,6 +25,11 @@ class DepartmentSeeder extends Seeder
                 'description' => 'Department of School of Business Information Science Management'
             ],
             [
+                'name' => 'General Education',
+                'code' => 'GEN_ED',
+                'description' => 'Department of General Education'
+            ],
+            [
                 'name' => 'Nursing',
                 'code' => 'NURSING',
                 'description' => 'Department of Nursing'

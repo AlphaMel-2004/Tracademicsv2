@@ -55,7 +55,13 @@ class SubjectSeeder extends Seeder
         }
 
         DB::transaction(function () use ($programs, $programPrefixes, $generalEducationSubjects) {
+            // Create specialized subjects for each program (skip GE program - GE has only GE subjects)
             foreach ($programs as $program) {
+                if (strtoupper($program->code) === 'GE') {
+                    // Skip generating generic specialized subjects for GE program
+                    continue;
+                }
+
                 $prefix = $programPrefixes[$program->code] ?? $this->generatePrefix($program->code);
 
                 for ($i = 1; $i <= 3; $i++) {
@@ -70,19 +76,26 @@ class SubjectSeeder extends Seeder
                         ]
                     );
                 }
+            }
 
+            // Create General Education subjects only once under the GE program
+            $geProgram = Program::where('code', 'GE')->first();
+            if ($geProgram) {
                 foreach ($generalEducationSubjects as $subjectData) {
-                    $code = sprintf('%s-%s', $subjectData['code'], $program->code);
+                    // Use the raw GE code (e.g., GE101) for GE program
+                    $code = $subjectData['code'];
                     Subject::updateOrCreate(
                         ['code' => $code],
                         [
                             'name' => $subjectData['name'],
                             'units' => $subjectData['units'],
-                            'program_id' => $program->id,
+                            'program_id' => $geProgram->id,
                             'year_level' => $subjectData['year_level'],
                         ]
                     );
                 }
+            } else {
+                Log::warning('SubjectSeeder: GE program not found. Skipping General Education subjects.');
             }
         });
     }

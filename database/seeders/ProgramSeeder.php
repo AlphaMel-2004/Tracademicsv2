@@ -17,6 +17,7 @@ class ProgramSeeder extends Seeder
         // Get departments
         $ase = Department::where('code', 'ASE')->first();
         $sbism = Department::where('code', 'SBISM')->first();
+    $genEd = Department::where('code', 'GEN_ED')->first();
         $nursing = Department::where('code', 'NURSING')->first();
         $alliedHealth = Department::where('code', 'ALLIED_HEALTH')->first();
         $graduateStudies = Department::where('code', 'GRADUATE_STUDIES')->first();
@@ -92,6 +93,14 @@ class ProgramSeeder extends Seeder
                 'code' => 'MATheo',
                 'department_id' => $graduateStudies->id,
                 'description' => 'Master of Arts in Theology Program'
+            ]
+            ,
+            // General Education Program
+            [
+                'name' => 'General Education',
+                'code' => 'GE',
+                'department_id' => $genEd->id,
+                'description' => 'General Education Program'
             ]
         ];
 

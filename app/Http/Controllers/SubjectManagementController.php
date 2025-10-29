@@ -27,9 +27,15 @@ class SubjectManagementController extends Controller
         
         $query = Subject::with(['program', 'facultyAssignments.user']);
         
-        // For Program Heads, filter to show only subjects from their program
+        // For Program Heads, show subjects from their program and also General Education (GE)
         if ($user->role->name === 'Program Head' && $user->program_id) {
-            $query->where('program_id', $user->program_id);
+            $geProgram = Program::where('code', 'GE')->first();
+            $query->where(function($q) use ($user, $geProgram) {
+                $q->where('program_id', $user->program_id);
+                if ($geProgram) {
+                    $q->orWhere('program_id', $geProgram->id);
+                }
+            });
         }
         
         // Apply filters
