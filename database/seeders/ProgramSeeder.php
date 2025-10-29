@@ -15,54 +15,50 @@ class ProgramSeeder extends Seeder
     public function run(): void
     {
         // Get departments
-        $asbme = Department::where('code', 'ASBME')->first();
+        $ase = Department::where('code', 'ASE')->first();
+        $sbism = Department::where('code', 'SBISM')->first();
         $nursing = Department::where('code', 'NURSING')->first();
         $alliedHealth = Department::where('code', 'ALLIED_HEALTH')->first();
         $graduateStudies = Department::where('code', 'GRADUATE_STUDIES')->first();
 
         $programs = [
-            // ASBME Programs
-            [
-                'name' => 'Bachelor of Science in Business Administration',
-                'code' => 'BSBA',
-                'department_id' => $asbme->id,
-                'description' => 'Business Administration Program'
-            ],
-            [
-                'name' => 'Bachelor of Science in Information Technology',
-                'code' => 'BSIT',
-                'department_id' => $asbme->id,
-                'description' => 'Information Technology Program'
-            ],
+            // ASE Programs
             [
                 'name' => 'Bachelor of Science in Psychology',
                 'code' => 'BSPsych',
-                'department_id' => $asbme->id,
+                'department_id' => $ase->id,
                 'description' => 'Psychology Program'
             ],
             [
                 'name' => 'Bachelor of Arts in Theology',
                 'code' => 'ABTheo',
-                'department_id' => $asbme->id,
+                'department_id' => $ase->id,
                 'description' => 'Theology Program'
-            ],
-            [
-                'name' => 'Bachelor of Science in Hospitality Management',
-                'code' => 'BSHM',
-                'department_id' => $asbme->id,
-                'description' => 'Hospitality Management Program'
             ],
             [
                 'name' => 'Bachelor of Elementary Education',
                 'code' => 'BEED',
-                'department_id' => $asbme->id,
+                'department_id' => $ase->id,
                 'description' => 'Elementary Education Program'
             ],
+            // SBISM Programs
             [
-                'name' => 'Bachelor of Secondary Education',
-                'code' => 'BSED',
-                'department_id' => $asbme->id,
-                'description' => 'Secondary Education Program'
+                'name' => 'Bachelor of Science in Business Administration',
+                'code' => 'BSBA',
+                'department_id' => $sbism->id,
+                'description' => 'Business Administration Program'
+            ],
+            [
+                'name' => 'Bachelor of Science in Information Technology',
+                'code' => 'BSIT',
+                'department_id' => $sbism->id,
+                'description' => 'Information Technology Program'
+            ],
+            [
+                'name' => 'Bachelor of Science in Hospitality Management',
+                'code' => 'BSHM',
+                'department_id' => $sbism->id,
+                'description' => 'Hospitality Management Program'
             ],
             // Nursing Programs
             [

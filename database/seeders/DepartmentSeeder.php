@@ -15,9 +15,14 @@ class DepartmentSeeder extends Seeder
     {
         $departments = [
             [
-                'name' => 'Arts and Sciences, Business Management, and Education',
-                'code' => 'ASBME',
-                'description' => 'Department of Arts and Sciences, Business Management, and Education'
+                'name' => 'Arts and Sciences Education',
+                'code' => 'ASE',
+                'description' => 'Department of Arts and Sciences Education'
+            ],
+            [
+                'name' => 'School of Business Information Science Management',
+                'code' => 'SBISM',
+                'description' => 'Department of School of Business Information Science Management'
             ],
             [
                 'name' => 'Nursing',

@@ -26,7 +26,8 @@ class UserSeeder extends Seeder
         $facultyRole = Role::where('name', 'Faculty')->first();
 
         // Get departments
-        $asbme = Department::where('code', 'ASBME')->first();
+    $ase = Department::where('code', 'ASE')->first();
+    $sbism = Department::where('code', 'SBISM')->first();
         $nursing = Department::where('code', 'NURSING')->first();
         $alliedHealth = Department::where('code', 'ALLIED_HEALTH')->first();
         $graduateStudies = Department::where('code', 'GRADUATE_STUDIES')->first();
@@ -58,15 +59,25 @@ class UserSeeder extends Seeder
                 'faculty_type' => null,
                 'department_id' => null
             ],
-            // Dean for ASBME
+            // Dean for ASE
             [
                 'name' => 'Dr. John Dela Cruz',
-                'email' => 'dean.asbme@brokenshire.edu.ph',
+                'email' => 'dean.ase@brokenshire.edu.ph',
                 'password' => Hash::make('password'),
                 'role_id' => $deanRole->id,
                 'current_semester_id' => $activeSemester->id,
                 'faculty_type' => 'regular',
-                'department_id' => $asbme->id
+                'department_id' => $ase->id
+            ],
+            // Dean for SBISM
+            [
+                'name' => 'Dr. Michael Tan',
+                'email' => 'dean.sbism@brokenshire.edu.ph',
+                'password' => Hash::make('password'),
+                'role_id' => $deanRole->id,
+                'current_semester_id' => $activeSemester->id,
+                'faculty_type' => 'regular',
+                'department_id' => $sbism->id
             ],
             // Dean for Nursing
             [
